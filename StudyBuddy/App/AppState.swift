@@ -1,11 +1,13 @@
 import CoreLocation
 import FirebaseFirestore
 import FirebaseAuth
+import FirebaseStorage
 import FirebaseCore
 import Combine
 
 final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locManager = CLLocationManager()
+    private let imageStorage = Storage.storage()
     private let database = Firestore.firestore()
     
     @Published var isAuthenticated: Bool = false
@@ -85,6 +87,19 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
+    func uploadImage(_ image: UIImage, identifier: String, folder:String) async -> String? {
+        guard let imageData = image.jpegData(compressionQuality: 0.7) else { return nil }
+        
+        let ref = Storage.storage().reference().child("\(folder)/\(identifier).jpg")
+        
+        do{
+            let _ = try await ref.putDataAsync(imageData)
+            let url = try await ref.downloadURL()
+            return url.absoluteString
+        } catch {
+            return nil
+        }
+    }
     
     func saveUser(_ user: UserProfile) {
         database.collection("users").document(user.id).setData(user.convertFirestore()) { error in
@@ -179,7 +194,7 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         var buildingList: [BuildingOption] = []
         for building in MetadataStore.buildings{
             let center = CLLocation(latitude: building.lat, longitude: building.long)
-            if center.distance(from: from) <= 100 {
+            if center.distance(from: from) <= 60 {
                 buildingList.append(building)
             }
         }

@@ -74,7 +74,7 @@ struct CreatePostRootView: View {
             }
             .onAppear {
                 if let location = appState.currentLoc {
-                    let detected = appState.detectBuilding(from: CLLocation(latitude: -33.88398260974563, longitude: 151.1991565131521))
+                    let detected = appState.detectBuilding(from: location)
                     if let detected, !detected.isEmpty {
                         detectedBuildings = detected
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {

@@ -11,6 +11,7 @@
 		9F7638BB2FA9B39C00ABDDA9 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7638BA2FA9B39C00ABDDA9 /* FirebaseCore */; };
 		9F7638BD2FA9B3A200ABDDA9 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7638BC2FA9B3A200ABDDA9 /* FirebaseFirestore */; };
 		9F7638BF2FA9B3AB00ABDDA9 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7638BE2FA9B3AB00ABDDA9 /* FirebaseAuth */; };
+		9F7638C52FAB1E5B00ABDDA9 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7638C42FAB1E5B00ABDDA9 /* FirebaseStorage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,9 +19,22 @@
 		9F7638B62FA9B35400ABDDA9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9F7638C72FADB90400ABDDA9 /* Exceptions for "StudyBuddy" folder in "StudyBuddy" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 16260F422FA719B1000B7CE5 /* StudyBuddy */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		16260F452FA719B1000B7CE5 /* StudyBuddy */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9F7638C72FADB90400ABDDA9 /* Exceptions for "StudyBuddy" folder in "StudyBuddy" target */,
+			);
 			path = StudyBuddy;
 			sourceTree = "<group>";
 		};
@@ -32,6 +46,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9F7638BB2FA9B39C00ABDDA9 /* FirebaseCore in Frameworks */,
+				9F7638C52FAB1E5B00ABDDA9 /* FirebaseStorage in Frameworks */,
 				9F7638BF2FA9B3AB00ABDDA9 /* FirebaseAuth in Frameworks */,
 				9F7638BD2FA9B3A200ABDDA9 /* FirebaseFirestore in Frameworks */,
 			);
@@ -88,6 +103,7 @@
 				9F7638BA2FA9B39C00ABDDA9 /* FirebaseCore */,
 				9F7638BC2FA9B3A200ABDDA9 /* FirebaseFirestore */,
 				9F7638BE2FA9B3AB00ABDDA9 /* FirebaseAuth */,
+				9F7638C42FAB1E5B00ABDDA9 /* FirebaseStorage */,
 			);
 			productName = StudyBuddy;
 			productReference = 16260F432FA719B1000B7CE5 /* StudyBuddy.app */;
@@ -283,8 +299,9 @@
 				DEVELOPMENT_TEAM = JMMTG5M592;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "";
+				INFOPLIST_FILE = StudyBuddy/Info.plist;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "To detect which building you're currently in";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "To detect which building you're currently in";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -318,8 +335,9 @@
 				DEVELOPMENT_TEAM = JMMTG5M592;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "";
+				INFOPLIST_FILE = StudyBuddy/Info.plist;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "To detect which building you're currently in";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "To detect which building you're currently in";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -392,6 +410,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9F7638B82FA9B39100ABDDA9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;
+		};
+		9F7638C42FAB1E5B00ABDDA9 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9F7638B82FA9B39100ABDDA9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
