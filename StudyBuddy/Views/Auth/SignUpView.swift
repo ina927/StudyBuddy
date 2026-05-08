@@ -114,7 +114,9 @@ struct SignUpView: View {
                             major: major.isEmpty ? nil : major
                         )
 
-                        appState.signUp(profile: profile)
+                        Task {
+                            await appState.signUp(email: email, password: password, profile: profile)
+                        }
                         dismiss()
                     }
                     .disabled(!canCreate)

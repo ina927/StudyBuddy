@@ -6,10 +6,14 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct BuildingDirectoryView: View {
+    @EnvironmentObject var appState: AppState
     let onSelectFloor: (_ code: String, _ name: String, _ floor: String, _ asset: String) -> Void
     @State private var expanded: Set<String> = []
+    @State private var detectedBuildings: [BuildingOption] = []
+    @State private var showBuildingDetection = false
 
     var body: some View {
         List {

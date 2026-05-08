@@ -39,7 +39,10 @@ struct LoginView: View {
                     showError = true
                     return
                 }
-                appState.login(email: email, username: email.components(separatedBy: "@").first ?? "user")
+                
+                Task {
+                    await appState.login(email: email, password: password)
+                }
             }
             .buttonStyle(.borderedProminent)
             .frame(maxWidth: .infinity)
