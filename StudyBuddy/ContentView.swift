@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var appState = AppState()
+    @EnvironmentObject var appState: AppState
     @State private var showSplash = true
 
     var body: some View {
@@ -25,10 +25,8 @@ struct ContentView: View {
             Group {
                 if appState.isAuthenticated {
                     MainTabView()
-                        .environmentObject(appState)
                 } else {
                     AuthFlowView()
-                        .environmentObject(appState)
                 }
             }
             .transition(.opacity)

@@ -13,7 +13,7 @@ struct PostDetailView: View {
     @State private var showEdit = false
 
     private var isHost: Bool {
-        appState.currentUser?.id == post.hostUserID
+        return appState.currentUser?.id == post.hostUserID
     }
 
     var body: some View {

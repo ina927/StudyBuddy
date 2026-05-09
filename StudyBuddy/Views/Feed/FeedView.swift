@@ -27,7 +27,6 @@ struct FeedView: View {
 
     private var filtered: [StudyPost] {
         let now = Date()
-
         return appState.posts.filter { post in
             let statusPass = showAllStatus ? true : post.computedStatus == .ongoing
             let buildingPass = building == "All" || post.buildingCode == building
@@ -124,7 +123,13 @@ struct FeedView: View {
                 }
             }
         }
+        .onAppear {
+            Task{
+                await appState.loadPosts()
+            }
+        }
     }
+
 
     private var uniqueMajors: [String] {
         let m = appState.posts.compactMap(\.hostMajor).filter { !$0.isEmpty }

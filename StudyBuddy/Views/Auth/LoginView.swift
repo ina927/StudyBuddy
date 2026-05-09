@@ -37,10 +37,9 @@ struct LoginDetailView: View {
 
                 Button {
                     guard canLogin else { showError = true; return }
-                    appState.login(
-                        email: email,
-                        username: email.components(separatedBy: "@").first ?? "user"
-                    )
+                    Task {
+                        await appState.login(email: email, password: password)
+                    }
                 } label: {
                     Text("Login")
                         .font(.body.weight(.semibold))

@@ -11,3 +11,4 @@ DerivedData/
 
 # Swift Package Manager local config
 .swiftpm/configuration/
+GoogleService-Info.plist

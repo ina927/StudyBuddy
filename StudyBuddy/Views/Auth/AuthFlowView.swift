@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-//Logo
 struct StudyBuddyLogo: View {
     var size: CGFloat = 80
 
@@ -46,7 +45,6 @@ struct StudyBuddyLogo: View {
     }
 }
 
-//Landing
 struct AuthFlowView: View {
     private let authBg = Color(red: 0.882, green: 0.867, blue: 0.961)
 

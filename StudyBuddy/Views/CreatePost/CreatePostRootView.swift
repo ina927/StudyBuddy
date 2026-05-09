@@ -6,11 +6,14 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct CreatePostRootView: View {
-    @EnvironmentObject private var appState: AppState
+    @EnvironmentObject var appState: AppState
     @State private var draft = CreatePostDraft()
     @State private var step = 1
+    @State private var detectedBuildings: [BuildingOption] = []
+    @State private var showBuildingDetection = false
     @State private var postedDraft: CreatePostDraft? = nil
 
     var body: some View {
@@ -26,14 +29,11 @@ struct CreatePostRootView: View {
                 VStack(spacing: 0) {
                     HStack {
                         if step > 1 {
-                            Button {
-                                step -= 1
-                            } label: {
+                            Button { step -= 1 } label: {
                                 Image(systemName: "chevron.left")
                                     .font(.headline)
                                     .frame(width: 32, height: 32)
                             }
-                            .buttonStyle(.plain)
                         } else {
                             Color.clear.frame(width: 32, height: 32)
                         }
@@ -51,8 +51,7 @@ struct CreatePostRootView: View {
 
                     ProgressView(value: Double(step), total: 3)
                         .padding(.horizontal)
-                        .padding(.top, 6)
-                        .padding(.bottom, 10)
+                        .padding(.top, 8)
 
                     Group {
                         if step == 1 {
@@ -64,9 +63,7 @@ struct CreatePostRootView: View {
                                 step = 2
                             }
                         } else if step == 2 {
-                            FloorPlanPinView(draft: $draft) {
-                                step = 3
-                            }
+                            FloorPlanPinView(draft: $draft) { step = 3 }
                         } else {
                             PostDetailsView(draft: $draft) {
                                 postedDraft = draft
@@ -75,6 +72,27 @@ struct CreatePostRootView: View {
                     }
                 }
                 .navigationBarHidden(true)
+                .confirmationDialog("Are you in one of these buildings?", isPresented: $showBuildingDetection, titleVisibility: .visible) {
+                    ForEach(detectedBuildings) { building in
+                        Button(building.label) {
+                            draft.buildingCode = building.code
+                            draft.buildingName = building.name
+                            step = 2
+                        }
+                    }
+                    Button("None of these", role: .cancel) { }
+                }
+                .onAppear {
+                    if let _ = appState.currentLoc {
+                        let detected = appState.detectBuilding(from: CLLocation(latitude: -33.88398260974563, longitude: 151.1991565131521))
+                        if let detected, !detected.isEmpty {
+                            detectedBuildings = detected
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                showBuildingDetection = true
+                            }
+                        }
+                    }
+                }
             }
         }
     }

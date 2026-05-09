@@ -37,16 +37,13 @@ struct SignUpView: View {
 
             ScrollView {
                 VStack(spacing: 20) {
-                    // Name row
                     HStack(spacing: 12) {
                         AuthInputField(icon: "person", placeholder: "First name", text: $firstName)
                         AuthInputField(icon: "person", placeholder: "Last name",  text: $lastName)
                     }
 
-                    // Username
                     AuthInputField(icon: "at", placeholder: "Username", text: $username)
 
-                    // Email
                     VStack(alignment: .leading, spacing: 6) {
                         AuthInputField(icon: "envelope", placeholder: "University email", text: $email, keyboardType: .emailAddress)
                         if emailTouched && !emailValid {
@@ -57,10 +54,8 @@ struct SignUpView: View {
                     }
                     .onChange(of: email) { _, _ in emailTouched = true }
 
-                    // Password
                     AuthInputField(icon: "lock", placeholder: "Password", text: $password, isSecure: true)
 
-                    // Faculty / Degree
                     VStack(alignment: .leading, spacing: 8) {
                         Label("Faculty / Degree", systemImage: "graduationcap")
                             .font(.subheadline)
@@ -74,7 +69,6 @@ struct SignUpView: View {
                         )
                     }
 
-                    // Year + Major
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Year", systemImage: "calendar")
@@ -99,7 +93,6 @@ struct SignUpView: View {
                         }
                     }
 
-                    // Create button
                     Button {
                         emailTouched = true
                         guard canCreate else { return }
@@ -113,7 +106,10 @@ struct SignUpView: View {
                             year: year,
                             major: major.isEmpty ? nil : major
                         )
-                        appState.signUp(profile: profile)
+                        Task {
+                            await appState.signUp(email: email, password: password, profile: profile)
+                        }
+                        dismiss()
                     } label: {
                         Text("Create account")
                             .font(.body.weight(.semibold))
@@ -124,7 +120,6 @@ struct SignUpView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
 
-                    // Login link
                     NavigationLink(destination: LoginDetailView()) {
                         HStack(spacing: 4) {
                             Text("Already have an account?")

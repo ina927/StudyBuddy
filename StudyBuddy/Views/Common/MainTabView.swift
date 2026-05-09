@@ -272,10 +272,10 @@ struct ProfileView: View {
 }
 
 private struct MyPostCard: View {
+    @EnvironmentObject private var appState: AppState
     @Binding var post: StudyPost
     var isPast: Bool = false
     @State private var showingEdit = false
-
     private let headerPurple = Color(red: 0.608, green: 0.475, blue: 0.929)
 
     var body: some View {
@@ -288,7 +288,7 @@ private struct MyPostCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .shadow(color: .black.opacity(0.07), radius: 4, x: 0, y: 2)
         .sheet(isPresented: $showingEdit) {
-            EditPostView(post: $post)
+            PostStatusEditSheet(post: $post)
         }
     }
 
@@ -327,7 +327,7 @@ private struct MyPostCard: View {
                     .foregroundStyle(Color.secondary)
 
                 HStack {
-                    availableBadge
+                    PostStatusBadge(status: post.computedStatus)
                     Spacer()
                     Button("Edit") { showingEdit = true }
                         .font(.subheadline.weight(.medium))
@@ -337,20 +337,6 @@ private struct MyPostCard: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var availableBadge: some View {
-        HStack(spacing: 3) {
-            Text("Available")
-            Image(systemName: "checkmark")
-                .font(.caption2.weight(.bold))
-        }
-        .font(.caption.weight(.semibold))
-        .foregroundStyle(Color.green)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(Color.green.opacity(0.12))
-        .clipShape(Capsule())
     }
 
     private var timeRangeText: String {
@@ -384,7 +370,6 @@ private struct EditProfileView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Name
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Name", systemImage: "person")
                                 .font(.subheadline)
@@ -395,7 +380,6 @@ private struct EditProfileView: View {
                             }
                         }
 
-                        // Username
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Username", systemImage: "at")
                                 .font(.subheadline)
@@ -403,7 +387,6 @@ private struct EditProfileView: View {
                             AuthInputField(icon: "at", placeholder: "Username", text: $username)
                         }
 
-                        // Faculty / Degree
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Faculty / Degree", systemImage: "graduationcap")
                                 .font(.subheadline)
@@ -416,7 +399,6 @@ private struct EditProfileView: View {
                             )
                         }
 
-                        // Year + Major
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Label("Year", systemImage: "calendar")
@@ -441,7 +423,6 @@ private struct EditProfileView: View {
                             }
                         }
 
-                        // Save button
                         Button {
                             guard var user = appState.currentUser else { return }
                             user.firstName = firstName
@@ -451,6 +432,7 @@ private struct EditProfileView: View {
                             user.major     = major.isEmpty ? nil : major
                             user.degrees   = degrees
                             appState.currentUser = user
+                            appState.saveUser(user)
                             dismiss()
                         } label: {
                             Text("Save")
@@ -482,6 +464,53 @@ private struct EditProfileView: View {
                 year      = user.year.isEmpty ? "Year 1" : user.year
                 major     = user.major ?? ""
                 degrees   = user.degrees
+            }
+        }
+    }
+}
+
+private struct PostStatusEditSheet: View {
+    @EnvironmentObject private var appState: AppState
+    @Binding var post: StudyPost
+    @Environment(\.dismiss) private var dismiss
+    @State private var selected: StudyPost.Status = .notStarted
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(StudyPost.Status.allCases, id: \.self) { status in
+                    Button {
+                        selected = status
+                    } label: {
+                        HStack {
+                            PostStatusBadge(status: status)
+                            Spacer()
+                            if selected == status {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(AppTheme.accentPurple)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .navigationTitle("Update Status")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") {
+                        post.statusOverride = selected
+                        appState.updatePost(post)
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+            .onAppear {
+                selected = post.statusOverride ?? post.computedStatus
             }
         }
     }
