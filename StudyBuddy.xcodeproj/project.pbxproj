@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		9F7638B72FA9B35400ABDDA9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9F7638B62FA9B35400ABDDA9 /* GoogleService-Info.plist */; };
+		267801E62FAEFD1500657001 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 267801E52FAEFD1500657001 /* GoogleService-Info.plist */; };
+		267801E82FAEFD2700657001 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 267801E72FAEFD2700657001 /* GoogleService-Info.plist */; };
 		9F7638BB2FA9B39C00ABDDA9 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7638BA2FA9B39C00ABDDA9 /* FirebaseCore */; };
 		9F7638BD2FA9B3A200ABDDA9 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7638BC2FA9B3A200ABDDA9 /* FirebaseFirestore */; };
 		9F7638BF2FA9B3AB00ABDDA9 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7638BE2FA9B3AB00ABDDA9 /* FirebaseAuth */; };
@@ -15,7 +16,8 @@
 
 /* Begin PBXFileReference section */
 		16260F432FA719B1000B7CE5 /* StudyBuddy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StudyBuddy.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		9F7638B62FA9B35400ABDDA9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		267801E52FAEFD1500657001 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		267801E72FAEFD2700657001 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -45,7 +47,8 @@
 			children = (
 				16260F452FA719B1000B7CE5 /* StudyBuddy */,
 				16260F442FA719B1000B7CE5 /* Products */,
-				9F7638B62FA9B35400ABDDA9 /* GoogleService-Info.plist */,
+				267801E52FAEFD1500657001 /* GoogleService-Info.plist */,
+				267801E72FAEFD2700657001 /* GoogleService-Info.plist */,
 				9F7638B92FA9B39C00ABDDA9 /* Frameworks */,
 			);
 			sourceTree = "<group>";
@@ -135,7 +138,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9F7638B72FA9B35400ABDDA9 /* GoogleService-Info.plist in Resources */,
+				267801E62FAEFD1500657001 /* GoogleService-Info.plist in Resources */,
+				267801E82FAEFD2700657001 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

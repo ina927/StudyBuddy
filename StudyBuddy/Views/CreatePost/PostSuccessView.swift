@@ -85,6 +85,11 @@ struct PostSuccessView: View {
                 .padding(.bottom, 40)
             }
         }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                onDone()
+            }
+        }
     }
 
     private var timeRange: String {
