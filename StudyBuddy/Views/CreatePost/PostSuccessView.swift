@@ -17,7 +17,6 @@ struct PostSuccessView: View {
             VStack(spacing: 0) {
                 Spacer()
 
-                // Checkmark
                 ZStack {
                     Circle()
                         .fill(Color.green.opacity(0.12))
@@ -38,7 +37,6 @@ struct PostSuccessView: View {
 
                 Spacer().frame(height: 40)
 
-                // Post summary card
                 VStack(alignment: .leading, spacing: 12) {
                     Text(draft.title.isEmpty ? "Study Session" : draft.title)
                         .font(.headline)
