@@ -6,19 +6,22 @@
 //
 
 import SwiftUI
-
+ 
 struct CommonPageHeader: View {
     let title: String
     var trailing: AnyView? = nil
-
+ 
     var body: some View {
         HStack {
             Text(title)
-                .font(.title2.bold())
+                .font(AppTheme.Typography.appTitle)
+                .foregroundStyle(AppTheme.Colors.textPrimary)
             Spacer()
             trailing
         }
-        .padding(.horizontal)
-        .padding(.top, 6)
+        .padding(.horizontal, AppTheme.Spacing.md)
+        .padding(.top, AppTheme.Spacing.sm)
+        .padding(.bottom, AppTheme.Spacing.xs)
+        .background(AppTheme.Colors.headerBackground)
     }
 }

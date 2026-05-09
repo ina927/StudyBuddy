@@ -6,23 +6,42 @@
 //
 
 import SwiftUI
-
+ 
 struct MainTabView: View {
     @EnvironmentObject private var appState: AppState
-
+ 
     var body: some View {
         TabView(selection: $appState.selectedTab) {
             FeedView()
                 .tabItem { Label("Feed", systemImage: "list.bullet.rectangle") }
                 .tag(0)
-
+ 
             CreatePostRootView()
                 .tabItem { Label("Create", systemImage: "plus.circle") }
                 .tag(1)
-
+ 
             ProfileView()
                 .tabItem { Label("Profile", systemImage: "person.crop.circle") }
                 .tag(2)
+        }
+        .accentColor(AppTheme.Colors.primary)
+        .onAppear {
+            let appearance = UITabBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor(AppTheme.Colors.surface)
+ 
+            appearance.stackedLayoutAppearance.selected.iconColor =
+                UIColor(AppTheme.Colors.primary)
+            appearance.stackedLayoutAppearance.selected.titleTextAttributes =
+                [.foregroundColor: UIColor(AppTheme.Colors.primary)]
+ 
+            appearance.stackedLayoutAppearance.normal.iconColor =
+                UIColor(AppTheme.Colors.iconInactive)
+            appearance.stackedLayoutAppearance.normal.titleTextAttributes =
+                [.foregroundColor: UIColor(AppTheme.Colors.iconInactive)]
+ 
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
         }
     }
 }
@@ -30,7 +49,6 @@ struct MainTabView: View {
 struct ProfileView: View {
     @EnvironmentObject private var appState: AppState
     @State private var isEditing = false
-
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var username = ""
@@ -39,9 +57,8 @@ struct ProfileView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
+            VStack(spacing: 0) {
                 CommonPageHeader(title: "Profile")
-
                 Form {
                     Section("My Information") {
                         if let user = appState.currentUser {
@@ -61,7 +78,6 @@ struct ProfileView: View {
                             }
                         }
                     }
-
                     Section {
                         if isEditing {
                             Button("Save") {
@@ -74,6 +90,7 @@ struct ProfileView: View {
                                 appState.currentUser = u
                                 isEditing = false
                             }
+                            .foregroundStyle(AppTheme.Colors.primary)
                             Button("Cancel", role: .cancel) { isEditing = false }
                         } else {
                             Button("Edit Profile") {
@@ -86,14 +103,16 @@ struct ProfileView: View {
                                 }
                                 isEditing = true
                             }
+                            .foregroundStyle(AppTheme.Colors.primary)
                         }
-
                         Button("Log out", role: .destructive) {
                             appState.logout()
                         }
                     }
                 }
             }
+            .background(AppTheme.Colors.background)
+            .navigationBarHidden(true)
         }
     }
 }
