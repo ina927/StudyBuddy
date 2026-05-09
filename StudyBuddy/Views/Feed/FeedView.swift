@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct FeedView: View {
-    @EnvironmentObject private var appState: AppState
+    @EnvironmentObject var appState: AppState
 
     @State private var query = ""
     @State private var showFilterSheet = false

@@ -13,6 +13,8 @@ struct PostDetailView: View {
     @State private var showEdit = false
     @State private var showFloorMap = false
 
+    @State private var authorProfilePic: String? = nil
+
     @State private var showFullConfirm = false
     @State private var showEndConfirm = false
 
@@ -55,17 +57,20 @@ struct PostDetailView: View {
             ScrollView {
                 VStack(spacing: AppTheme.Spacing.md) {
                     ZStack(alignment: .bottomLeading) {
-                        Rectangle()
-                            .fill(AppTheme.Colors.primaryLight.opacity(0.45))
-                            .frame(height: 200)
-
-                        if let asset = post.photoAssetName {
-                            Image(asset)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(height: 200)
-                                .clipped()
-                        }
+                    
+                        if let photo = post.photoAssetName, let url = URL(string: photo) {
+                           AsyncImage(url: url) { image in
+                               image
+                                   .resizable()
+                                   .scaledToFill()
+                                   .frame(height: 130)
+                                   .clipped()
+                           } placeholder: {
+                               Rectangle()
+                                   .fill(Color.purple.opacity(0.25))
+                                   .frame(height: 130)
+                           }
+                       }
 
                         HStack(spacing: 4) {
                             Image(systemName: "mappin.circle.fill")
@@ -86,15 +91,19 @@ struct PostDetailView: View {
 
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
                         HStack(spacing: AppTheme.Spacing.sm) {
-                            Circle()
-                                .fill(AppTheme.Colors.primaryPale)
-                                .frame(width: 38, height: 38)
-                                .overlay(
-                                    Text(String(post.hostUsername.prefix(2)).uppercased())
-                                        .font(AppTheme.Typography.label.weight(.bold))
-                                        .foregroundStyle(AppTheme.Colors.primary)
-                                )
-
+                            if let pic = authorProfilePic, let url = URL(string: pic) {
+                                AsyncImage(url: url) { image in
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 34, height: 34)
+                                            .clipShape(Circle())
+                                    } placeholder: {
+                                        defaultAvatar
+                                    }
+                                } else {
+                                    defaultAvatar
+                                }
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(post.hostUsername)
                                     .font(AppTheme.Typography.username)
@@ -286,7 +295,23 @@ struct PostDetailView: View {
         .sheet(isPresented: $showFloorMap) {
             FloorMapPreviewSheet()
         }
+        .task {
+            if let user = await appState.getUser(id: post.hostUserID) {
+                authorProfilePic = user.profilePic
+            }
+        }
     }
+    
+    var defaultAvatar: some View {
+       Circle()
+           .fill(Color.purple.opacity(0.2))
+           .frame(width: 34, height: 34)
+           .overlay(
+               Text(String(post.hostUsername.prefix(2)).uppercased())
+                   .font(.caption.bold())
+           )
+    }
+    
 }
 
 private struct FloorMapPreviewSheet: View {

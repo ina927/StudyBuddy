@@ -170,10 +170,12 @@ struct PostDetailsView: View {
                 }
 
                 Button {
-                    draft.startTime = normalizedStart
-                    draft.endTime = normalizedEnd
-                    appState.addPost(from: draft)
-                    onPosted()
+                    Task {
+                        draft.startTime = normalizedStart
+                        draft.endTime = normalizedEnd
+                        await appState.addPost(from: draft)
+                        onPosted()
+                    }
                 } label: {
                     Text("Post")
                         .font(AppTheme.Typography.label.weight(.semibold))
