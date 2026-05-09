@@ -19,14 +19,18 @@ struct PostDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                if let asset = post.photoAssetName {
-                    Image(asset)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 220)
-                        .clipped()
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .padding(.horizontal)
+                if let photo = post.photoAssetName, let url = URL(string: photo) {
+                    AsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 130)
+                            .clipped()
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color.purple.opacity(0.25))
+                            .frame(height: 130)
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 10) {

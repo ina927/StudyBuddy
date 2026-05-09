@@ -9,7 +9,10 @@ import SwiftUI
 
 struct PostCardView: View {
     let post: StudyPost
+    @EnvironmentObject var appState: AppState
     @State private var expanded = false
+    @State private var authorProfilePic: String? = nil
+
 
     var body: some View {
         VStack(spacing: 0) {
@@ -18,12 +21,18 @@ struct PostCardView: View {
                     .fill(Color.purple.opacity(0.25))
                     .frame(height: 130)
 
-                if let photo = post.photoAssetName {
-                    Image(photo)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 130)
-                        .clipped()
+                if let photo = post.photoAssetName, let url = URL(string: photo) {
+                    AsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 130)
+                            .clipped()
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color.purple.opacity(0.25))
+                            .frame(height: 130)
+                    }
                 }
 
                 Label("\(post.buildingCode).\(post.floor)", systemImage: "mappin.circle.fill")
@@ -36,11 +45,21 @@ struct PostCardView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Circle()
-                        .fill(Color.purple.opacity(0.2))
-                        .frame(width: 34, height: 34)
-                        .overlay(Text(String(post.hostUsername.prefix(2)).uppercased()).font(.caption.bold()))
-
+                    if let pic = authorProfilePic, let url = URL(string: pic) {
+                        AsyncImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 34, height: 34)
+                                    .clipShape(Circle())
+                            } placeholder: {
+                                defaultAvatar
+                            }
+                        } else {
+                            defaultAvatar
+                        }
+                    
+         
                     VStack(alignment: .leading, spacing: 1) {
                         Text(post.hostUsername).font(.subheadline.bold())
                         Text(post.hostYear).font(.caption).foregroundStyle(.secondary)
@@ -88,7 +107,23 @@ struct PostCardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color(.separator), lineWidth: 0.6))
         .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
+        .task {
+            if let user = await appState.getUser(id: post.hostUserID) {
+                authorProfilePic = user.profilePic
+            }
+        }
+        
     }
+    
+    var defaultAvatar: some View {
+           Circle()
+               .fill(Color.purple.opacity(0.2))
+               .frame(width: 34, height: 34)
+               .overlay(
+                   Text(String(post.hostUsername.prefix(2)).uppercased())
+                       .font(.caption.bold())
+               )
+       }
 }
 
 private extension Text {

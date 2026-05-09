@@ -36,12 +36,45 @@ struct ProfileView: View {
     @State private var username = ""
     @State private var year = ""
     @State private var major = ""
+    @State private var profileImage: UIImage?
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 12) {
                 CommonPageHeader(title: "Profile")
+                ZStack {
+                           if let pic = appState.currentUser?.profilePic, let url = URL(string: pic), profileImage == nil {
+                               AsyncImage(url: url) { image in
+                                   image
+                                       .resizable()
+                                       .scaledToFill()
+                               } placeholder: {
+                                   Circle().fill(Color.purple.opacity(0.2))
+                               }
+                               .frame(width: 120, height: 120)
+                               .clipShape(Circle())
+                           }
 
+                           ImagePickerView(selectedImage: $profileImage)
+                               .frame(width: 120, height: 120)
+                               .clipShape(Circle())
+                               .opacity(profileImage != nil ? 1 : (appState.currentUser?.profilePic == nil ? 1 : 0.01))
+                       }
+                       .frame(width: 120, height: 120)
+                       .onChange(of: profileImage) {
+                           guard let image = profileImage, let user = appState.currentUser else { return }
+                           Task {
+                               if let url = await appState.uploadImage(image, identifier: user.id, folder: "profile") {
+                                   var updated = user
+                                   updated.profilePic = url
+                                   appState.saveUser(updated)
+                                   await MainActor.run {
+                                       appState.currentUser = updated
+                                   }
+                               }
+                           }
+                       }
+                
                 Form {
                     Section("My Information") {
                         if let user = appState.currentUser {

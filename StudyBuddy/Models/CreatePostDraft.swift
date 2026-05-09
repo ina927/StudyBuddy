@@ -18,7 +18,6 @@ struct CreatePostDraft: Hashable {
     var pinX: CGFloat = 0.5
     var pinY: CGFloat = 0.5
     var locationDescription: String = ""
-    var photoAssetName: String? = nil
 
     var title: String = ""
     var postBody: String = ""
@@ -29,8 +28,10 @@ struct CreatePostDraft: Hashable {
     var startTime: Date = Date()
     var endTime: Date = Date().addingTimeInterval(3600)
 
+    var postImage: UIImage? = nil
+    
     var canProceedFromLocation: Bool {
-        !locationDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && photoAssetName != nil
+        !locationDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && postImage != nil
     }
 
     var canPost: Bool {

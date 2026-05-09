@@ -134,11 +134,17 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
-    func addPost(from draft: CreatePostDraft) {
+    func addPost(from draft: CreatePostDraft) async {
         guard let user = currentUser else { return }
+        let postId = UUID().uuidString
+        
+        var imageURL: String? = nil
+            if let image = draft.postImage {
+                imageURL = await uploadImage(image, identifier: postId, folder: "posts")
+            }
         
         let post = StudyPost(
-            id: UUID().uuidString,
+            id: postId,
             hostUserID: user.id,
             hostUsername: user.username,
             hostYear: user.year,
@@ -150,7 +156,7 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
             buildingName: draft.buildingName,
             floor: draft.floor,
             locationDescription: draft.locationDescription,
-            photoAssetName: draft.photoAssetName,
+            photoAssetName: imageURL,
             subjects: draft.subjects,
             vibe: draft.vibe,
             capacity: draft.capacity,
@@ -159,10 +165,13 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
             createdAt: Date(),
             statusOverride: nil
         )
+        await MainActor.run {
+            posts.insert(post, at: 0)
+            savePost(post)
+            selectedTab = 0
+        }
         
-        posts.insert(post, at: 0)
-        savePost(post)
-        selectedTab = 0
+        
     }
     
     func savePost(_ post: StudyPost) {
@@ -173,6 +182,7 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
                 self.status = "Saved post"
             }
         }
+        print(self.status)
     }
     
     func updatePost(_ post: StudyPost) {

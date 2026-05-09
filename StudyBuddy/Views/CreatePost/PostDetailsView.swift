@@ -52,8 +52,10 @@ struct PostDetailsView: View {
             }
             
             Button("Post") {
-                    appState.addPost(from: draft)
+                Task {
+                    await appState.addPost(from: draft)
                     onPosted()
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .frame(maxWidth: .infinity)

@@ -77,14 +77,9 @@ struct FloorPlanPinView: View {
                     Text("*").foregroundStyle(.red)
                 }
 
-                PhotosPicker(selection: $photoItem, matching: .images) {
-                    HStack {
-                        Image(systemName: "camera.fill")
-                        Text(draft.photoAssetName == nil ? "Take or upload a photo of where you are now" : "Photo selected")
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.bordered)
+                ImagePickerView(selectedImage: $draft.postImage)
+                    .frame(height: 160)
+
             }
             .padding(.horizontal)
 
@@ -94,12 +89,6 @@ struct FloorPlanPinView: View {
             .buttonStyle(.borderedProminent)
             .disabled(!draft.canProceedFromLocation)
             .padding(.bottom, 8)
-        }
-        .onChange(of: photoItem) {
-            // demo placeholder: replace with real upload URL/asset later
-            if photoItem != nil {
-                draft.photoAssetName = "room_photo_1"
-            }
         }
     }
 }
