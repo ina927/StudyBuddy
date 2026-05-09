@@ -56,7 +56,15 @@ struct MetadataStore {
     ]
 
     static let vibes: [String] = [
-        "Silent Focus", "Light Discussion", "Problem Solving", "Exam Sprint", "Peer Teaching"
+        "Silent Focus",
+        "Casual Co-study",
+        "Problem Solving",
+        "Exam Revision",
+        "Assignment Sprint",
+        "Peer Teaching",
+        "Discussion Heavy",
+        "Accountability Session"
+
     ]
 
     static let buildings: [BuildingOption] = [
