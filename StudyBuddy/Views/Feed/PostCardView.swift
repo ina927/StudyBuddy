@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct PostCardView: View {
+    @EnvironmentObject var appState: AppState
+    @State private var authorProfilePic: String? = nil
     let post: StudyPost
 
     private var degreeAndYear: String {
@@ -37,12 +39,18 @@ struct PostCardView: View {
                     .fill(AppTheme.Colors.primaryLight.opacity(0.45))
                     .frame(height: 110)
 
-                if let photo = post.photoAssetName {
-                    Image(photo)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 110)
-                        .clipped()
+                if let photo = post.photoAssetName, let url = URL(string: photo) {
+                    AsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 130)
+                            .clipped()
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color.purple.opacity(0.25))
+                            .frame(height: 130)
+                    }
                 }
 
                 HStack(spacing: 4) {
@@ -62,14 +70,19 @@ struct PostCardView: View {
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
                 HStack(spacing: AppTheme.Spacing.sm) {
-                    Circle()
-                        .fill(AppTheme.Colors.primaryPale)
-                        .frame(width: 38, height: 38)
-                        .overlay(
-                            Text(String(post.hostUsername.prefix(2)).uppercased())
-                                .font(AppTheme.Typography.label.weight(.bold))
-                                .foregroundStyle(AppTheme.Colors.primary)
-                        )
+                    if let pic = authorProfilePic, let url = URL(string: pic) {
+                        AsyncImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 34, height: 34)
+                                    .clipShape(Circle())
+                            } placeholder: {
+                                defaultAvatar
+                            }
+                        } else {
+                            defaultAvatar
+                        }
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text(post.hostUsername)
@@ -146,7 +159,24 @@ struct PostCardView: View {
                 radius: AppTheme.Shadows.card.radius,
                 x: AppTheme.Shadows.card.x,
                 y: AppTheme.Shadows.card.y)
+        .task {
+            if let user = await appState.getUser(id: post.hostUserID) {
+                authorProfilePic = user.profilePic
+            }
+        }
+        
     }
+    
+    var defaultAvatar: some View {
+       Circle()
+           .fill(Color.purple.opacity(0.2))
+           .frame(width: 34, height: 34)
+           .overlay(
+               Text(String(post.hostUsername.prefix(2)).uppercased())
+                   .font(.caption.bold())
+           )
+    }
+    
 
     private func vibeColor(_ vibe: String) -> Color {
         switch vibe {

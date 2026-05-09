@@ -12,6 +12,7 @@
 		9F7638BB2FA9B39C00ABDDA9 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7638BA2FA9B39C00ABDDA9 /* FirebaseCore */; };
 		9F7638BD2FA9B3A200ABDDA9 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7638BC2FA9B3A200ABDDA9 /* FirebaseFirestore */; };
 		9F7638BF2FA9B3AB00ABDDA9 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7638BE2FA9B3AB00ABDDA9 /* FirebaseAuth */; };
+		9F7639052FAF560200ABDDA9 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7639042FAF560200ABDDA9 /* FirebaseStorage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9F7638BB2FA9B39C00ABDDA9 /* FirebaseCore in Frameworks */,
+				9F7639052FAF560200ABDDA9 /* FirebaseStorage in Frameworks */,
 				9F7638BF2FA9B3AB00ABDDA9 /* FirebaseAuth in Frameworks */,
 				9F7638BD2FA9B3A200ABDDA9 /* FirebaseFirestore in Frameworks */,
 			);
@@ -91,6 +93,7 @@
 				9F7638BA2FA9B39C00ABDDA9 /* FirebaseCore */,
 				9F7638BC2FA9B3A200ABDDA9 /* FirebaseFirestore */,
 				9F7638BE2FA9B3AB00ABDDA9 /* FirebaseAuth */,
+				9F7639042FAF560200ABDDA9 /* FirebaseStorage */,
 			);
 			productName = StudyBuddy;
 			productReference = 16260F432FA719B1000B7CE5 /* StudyBuddy.app */;
@@ -396,6 +399,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9F7638B82FA9B39100ABDDA9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;
+		};
+		9F7639042FAF560200ABDDA9 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9F7638B82FA9B39100ABDDA9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

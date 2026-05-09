@@ -22,6 +22,7 @@ struct ContentView: View {
                     }
                 }
         } else {
+        ZStack{
             Group {
                 if appState.isAuthenticated {
                     MainTabView()
@@ -45,6 +46,9 @@ struct SplashView: View {
                 Text("StudyBuddy")
                     .font(.system(size: 36, weight: .bold))
                     .foregroundStyle(Color.black)
+            
+            if appState.isLoading {
+                LoadingOverlay()
             }
         }
     }

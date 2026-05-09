@@ -1,10 +1,3 @@
-//
-//  MainTabView.swift
-//  StudyBuddy
-//
-//  Created by Ina Song on 4/5/2026.
-//
-
 import SwiftUI
 import PhotosUI
 
@@ -30,24 +23,15 @@ struct MainTabView: View {
             let appearance = UITabBarAppearance()
             appearance.configureWithOpaqueBackground()
             appearance.backgroundColor = UIColor(AppTheme.Colors.surface)
-
-            appearance.stackedLayoutAppearance.selected.iconColor =
-                UIColor(AppTheme.Colors.primary)
-            appearance.stackedLayoutAppearance.selected.titleTextAttributes =
-                [.foregroundColor: UIColor(AppTheme.Colors.primary)]
-
-            appearance.stackedLayoutAppearance.normal.iconColor =
-                UIColor(AppTheme.Colors.iconInactive)
-            appearance.stackedLayoutAppearance.normal.titleTextAttributes =
-                [.foregroundColor: UIColor(AppTheme.Colors.iconInactive)]
-
+            appearance.stackedLayoutAppearance.selected.iconColor = UIColor(AppTheme.Colors.primary)
+            appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor(AppTheme.Colors.primary)]
+            appearance.stackedLayoutAppearance.normal.iconColor = UIColor(AppTheme.Colors.iconInactive)
+            appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor(AppTheme.Colors.iconInactive)]
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance
         }
     }
 }
-
-// MARK: - ProfileView
 
 struct ProfileView: View {
     @EnvironmentObject private var appState: AppState
@@ -66,7 +50,7 @@ struct ProfileView: View {
                 tabPickerSection
                 switch profileTab {
                 case .profile: profileInfoSection
-                case .posts:   myPostsSection
+                case .posts: myPostsSection
                 }
             }
         }
@@ -142,7 +126,9 @@ struct ProfileView: View {
                 if let data = try? await newItem?.loadTransferable(type: Data.self) {
                     guard var user = appState.currentUser else { return }
                     user.avatarData = data
-                    appState.currentUser = user
+                    await MainActor.run {
+                        appState.currentUser = user
+                    }
                 }
             }
         }
@@ -194,11 +180,11 @@ struct ProfileView: View {
     private var profileInfoSection: some View {
         VStack(spacing: 12) {
             if let user = appState.currentUser {
-                infoRow(label: "Faculty",    value: user.degrees.first ?? "-")
-                infoRow(label: "Major",      value: user.major ?? "-")
-                infoRow(label: "Year",       value: user.year.isEmpty ? "-" : user.year)
+                infoRow(label: "Faculty", value: user.degrees.first ?? "-")
+                infoRow(label: "Major", value: user.major ?? "-")
+                infoRow(label: "Year", value: user.year.isEmpty ? "-" : user.year)
                 infoRow(label: "University", value: "University of Technology Sydney")
-                infoRow(label: "Email",      value: user.email)
+                infoRow(label: "Email", value: user.email)
             }
 
             Button(role: .destructive) {
@@ -271,7 +257,6 @@ struct ProfileView: View {
 
                 if !pastIndices.isEmpty {
                     Divider().padding(.horizontal, 16).padding(.vertical, 4)
-
                     Text("Past posts")
                         .font(.subheadline)
                         .foregroundStyle(Color.secondary)
@@ -289,8 +274,6 @@ struct ProfileView: View {
         )
     }
 }
-
-// MARK: - MyPostCard
 
 private struct MyPostCard: View {
     @EnvironmentObject private var appState: AppState
@@ -315,11 +298,15 @@ private struct MyPostCard: View {
     private var imagePlaceholder: some View {
         ZStack {
             AppTheme.Colors.primary.opacity(isPast ? 0.35 : 0.75)
-            if let assetName = post.photoAssetName {
-                Image(assetName)
-                    .resizable()
-                    .scaledToFill()
-                    .opacity(isPast ? 0.6 : 1)
+            if let urlString = post.photoAssetName, let url = URL(string: urlString) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().scaledToFill().opacity(isPast ? 0.6 : 1)
+                    default:
+                        Image(systemName: "camera").font(.title2).foregroundStyle(.white.opacity(0.75))
+                    }
+                }
             } else {
                 Image(systemName: "camera")
                     .font(.title2)
@@ -363,7 +350,7 @@ private struct MyPostCard: View {
         let fmt = DateFormatter()
         fmt.dateFormat = "h:mma"
         let start = fmt.string(from: post.startTime).lowercased()
-        let end   = fmt.string(from: post.endTime).lowercased()
+        let end = fmt.string(from: post.endTime).lowercased()
         let isToday = Calendar.current.isDateInToday(post.startTime)
         if isToday { return "\(start) - \(end) today" }
         let dayFmt = DateFormatter()
@@ -372,17 +359,15 @@ private struct MyPostCard: View {
     }
 }
 
-// MARK: - EditProfileView
-
 private struct EditProfileView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.dismiss) private var dismiss
 
     @State private var firstName = ""
-    @State private var lastName  = ""
-    @State private var username  = ""
-    @State private var year      = "Year 1"
-    @State private var major     = ""
+    @State private var lastName = ""
+    @State private var username = ""
+    @State private var year = "Year 1"
+    @State private var major = ""
     @State private var degrees: [String] = []
 
     var body: some View {
@@ -398,7 +383,7 @@ private struct EditProfileView: View {
                                 .foregroundStyle(.secondary)
                             HStack(spacing: 12) {
                                 AuthInputField(icon: "person", placeholder: "First name", text: $firstName)
-                                AuthInputField(icon: "person", placeholder: "Last name",  text: $lastName)
+                                AuthInputField(icon: "person", placeholder: "Last name", text: $lastName)
                             }
                         }
 
@@ -448,11 +433,11 @@ private struct EditProfileView: View {
                         Button {
                             guard var user = appState.currentUser else { return }
                             user.firstName = firstName
-                            user.lastName  = lastName
-                            user.username  = username.isEmpty ? user.username : username
-                            user.year      = year
-                            user.major     = major.isEmpty ? nil : major
-                            user.degrees   = degrees
+                            user.lastName = lastName
+                            user.username = username.isEmpty ? user.username : username
+                            user.year = year
+                            user.major = major.isEmpty ? nil : major
+                            user.degrees = degrees
                             appState.currentUser = user
                             appState.saveUser(user)
                             dismiss()
@@ -481,17 +466,15 @@ private struct EditProfileView: View {
             .onAppear {
                 guard let user = appState.currentUser else { return }
                 firstName = user.firstName
-                lastName  = user.lastName
-                username  = user.username
-                year      = user.year.isEmpty ? "Year 1" : user.year
-                major     = user.major ?? ""
-                degrees   = user.degrees
+                lastName = user.lastName
+                username = user.username
+                year = user.year.isEmpty ? "Year 1" : user.year
+                major = user.major ?? ""
+                degrees = user.degrees
             }
         }
     }
 }
-
-// MARK: - PostStatusEditSheet
 
 private struct PostStatusEditSheet: View {
     @EnvironmentObject private var appState: AppState
