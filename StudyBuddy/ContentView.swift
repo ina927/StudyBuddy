@@ -11,11 +11,17 @@ struct ContentView: View {
     @EnvironmentObject var appState: AppState
 
     var body: some View {
-        Group {
-            if appState.isAuthenticated {
-                MainTabView()
-            } else {
-                AuthFlowView()
+        ZStack{
+            Group {
+                if appState.isAuthenticated {
+                    MainTabView()
+                } else {
+                    AuthFlowView()
+                }
+            }
+            
+            if appState.isLoading {
+                LoadingOverlay()
             }
         }
     }

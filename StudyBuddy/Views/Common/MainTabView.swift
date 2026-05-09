@@ -49,16 +49,51 @@ struct MainTabView: View {
 struct ProfileView: View {
     @EnvironmentObject private var appState: AppState
     @State private var isEditing = false
+
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var username = ""
     @State private var year = ""
     @State private var major = ""
+    @State private var profileImage: UIImage?
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
+            VStack(spacing: 12) {
                 CommonPageHeader(title: "Profile")
+                ZStack {
+                           if let pic = appState.currentUser?.profilePic, let url = URL(string: pic), profileImage == nil {
+                               AsyncImage(url: url) { image in
+                                   image
+                                       .resizable()
+                                       .scaledToFill()
+                               } placeholder: {
+                                   Circle().fill(Color.purple.opacity(0.2))
+                               }
+                               .frame(width: 120, height: 120)
+                               .clipShape(Circle())
+                           }
+
+                           ImagePickerView(selectedImage: $profileImage)
+                               .frame(width: 120, height: 120)
+                               .clipShape(Circle())
+                               .opacity(profileImage != nil ? 1 : (appState.currentUser?.profilePic == nil ? 1 : 0.01))
+                       }
+                       .frame(width: 120, height: 120)
+                       .onChange(of: profileImage) {
+                           guard let image = profileImage, let user = appState.currentUser else { return }
+                           Task {
+                               if let url = await appState.uploadImage(image, identifier: user.id, folder: "profile") {
+                                   var updated = user
+                                   updated.profilePic = url
+                                   appState.saveUser(updated)
+                                   await MainActor.run {
+                                       appState.currentUser = updated
+                                   }
+                               }
+                           }
+                       }
+                
                 Form {
                     Section("My Information") {
                         if let user = appState.currentUser {
@@ -78,6 +113,7 @@ struct ProfileView: View {
                             }
                         }
                     }
+
                     Section {
                         if isEditing {
                             Button("Save") {
@@ -90,7 +126,6 @@ struct ProfileView: View {
                                 appState.currentUser = u
                                 isEditing = false
                             }
-                            .foregroundStyle(AppTheme.Colors.primary)
                             Button("Cancel", role: .cancel) { isEditing = false }
                         } else {
                             Button("Edit Profile") {
@@ -103,16 +138,14 @@ struct ProfileView: View {
                                 }
                                 isEditing = true
                             }
-                            .foregroundStyle(AppTheme.Colors.primary)
                         }
+
                         Button("Log out", role: .destructive) {
                             appState.logout()
                         }
                     }
                 }
             }
-            .background(AppTheme.Colors.background)
-            .navigationBarHidden(true)
         }
     }
 }

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import PhotosUI
 
 struct UserProfile: Identifiable, Codable {
     let id: String
@@ -16,6 +17,7 @@ struct UserProfile: Identifiable, Codable {
     var degrees: [String]
     var year: String
     var major: String?
+    var profilePic: String?
     
     func convertFirestore() -> [String: Any] {
         return [
@@ -25,7 +27,8 @@ struct UserProfile: Identifiable, Codable {
             "username": username,
             "degrees": degrees,
             "year": year,
-            "major": major ?? ""
+            "major": major ?? "",
+            "profilePic": profilePic ?? ""
         ]
     }
 
@@ -35,7 +38,11 @@ struct UserProfile: Identifiable, Codable {
               let lastName = data["lastName"] as? String,
               let username = data["username"] as? String,
               let degrees = data["degrees"] as? [String],
-              let year = data["year"] as? String else { return nil }
+              let profilePic = data["profilePic"] as? String,
+              let year = data["year"] as? String
+        else { return nil }
+              
+        
 
         return UserProfile(
             id: id,
@@ -45,8 +52,8 @@ struct UserProfile: Identifiable, Codable {
             username: username,
             degrees: degrees,
             year: year,
-            major: data["major"] as? String
+            major: data["major"] as? String,
+            profilePic: profilePic
         )
     }
 }
-
