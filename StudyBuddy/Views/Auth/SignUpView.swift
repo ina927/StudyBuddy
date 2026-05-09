@@ -8,101 +8,101 @@
 import SwiftUI
 
 struct SignUpView: View {
-    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
+    @Environment(\.dismiss) private var dismiss
 
-    @State private var email = ""
-    @State private var password = ""
-    @State private var firstName = ""
-    @State private var lastName = ""
-    @State private var username = ""
-    @State private var year = "Year 1"
-    @State private var major = ""
-
+    @State private var username       = ""
+    @State private var email          = ""
+    @State private var password       = ""
+    @State private var firstName      = ""
+    @State private var lastName       = ""
+    @State private var year           = "Year 1"
+    @State private var major          = ""
     @State private var selectedDegrees: [String] = []
-    @State private var degreeSelection = ""
-
-    @State private var emailTouched = false
+    @State private var emailTouched   = false
 
     private var emailValid: Bool {
         let e = email.lowercased()
-        let formatOK = e.contains("@") && e.contains(".")
-        let domainOK = e.hasSuffix("@uts.edu.au") || e.hasSuffix("@student.uts.edu.au")
-        return formatOK && domainOK
+        return (e.hasSuffix("@uts.edu.au") || e.hasSuffix("@student.uts.edu.au")) && e.contains("@")
     }
 
     private var canCreate: Bool {
-        emailValid &&
-        !password.isEmpty &&
-        !firstName.isEmpty &&
-        !lastName.isEmpty &&
-        !username.isEmpty &&
-        !selectedDegrees.isEmpty
+        emailValid && !password.isEmpty && !firstName.isEmpty &&
+        !lastName.isEmpty && !username.isEmpty && !selectedDegrees.isEmpty
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Required") {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 4) {
-                            Text("Student Email")
-                            Text("*").foregroundStyle(.red)
-                        }
+        ZStack {
+            AppTheme.pageBg.ignoresSafeArea()
 
-                        TextField("name@uts.edu.au", text: $email)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .onChange(of: email) {
-                                emailTouched = true
-                            }
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Name row
+                    HStack(spacing: 12) {
+                        AuthInputField(icon: "person", placeholder: "First name", text: $firstName)
+                        AuthInputField(icon: "person", placeholder: "Last name",  text: $lastName)
+                    }
+
+                    // Username
+                    AuthInputField(icon: "at", placeholder: "Username", text: $username)
+
+                    // Email
+                    VStack(alignment: .leading, spacing: 6) {
+                        AuthInputField(icon: "envelope", placeholder: "University email", text: $email, keyboardType: .emailAddress)
                         if emailTouched && !emailValid {
-                            Text("Please use a valid student email (@uts.edu.au or @student.uts.edu.au).")
+                            Text("Use your @uts.edu.au or @student.uts.edu.au email")
                                 .font(.caption)
                                 .foregroundStyle(.red)
                         }
                     }
+                    .onChange(of: email) { _, _ in emailTouched = true }
 
-                    SecureField("Password *", text: $password)
-                    TextField("First Name *", text: $firstName)
-                    TextField("Last Name *", text: $lastName)
-                    TextField("Username *", text: $username)
+                    // Password
+                    AuthInputField(icon: "lock", placeholder: "Password", text: $password, isSecure: true)
 
-                    Picker("Year *", selection: $year) {
-                        Text("Year 1").tag("Year 1")
-                        Text("Year 2").tag("Year 2")
-                        Text("Year 3").tag("Year 3")
-                        Text("Year 4+").tag("Year 4+")
+                    // Faculty / Degree
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Faculty / Degree", systemImage: "graduationcap")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        MultiSelectDropdown(
+                            placeholder: "Search degree",
+                            options: MetadataStore.degrees.map(\.title),
+                            selectedItems: $selectedDegrees,
+                            maxSelection: 4
+                        )
                     }
-                }
 
-                Section("Degree *") {
-                    MultiSelectDropdown(
-                        placeholder: "Search degree",
-                        options: MetadataStore.degrees.map(\.title),
-                        selectedItems: $selectedDegrees,
-                        maxSelection: 4
-                    )
-                }
+                    // Year + Major
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("Year", systemImage: "calendar")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Picker("Year", selection: $year) {
+                                ForEach(["Year 1", "Year 2", "Year 3", "Year 4+"], id: \.self) { Text($0) }
+                            }
+                            .pickerStyle(.menu)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 13)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(AppTheme.softPurple)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
 
-                Section("Major (Optional)") {
-                    TextField("Major", text: $major)
-                }
-            }
-            .navigationTitle("Sign Up")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") {
-                        dismiss()
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("Major", systemImage: "book")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            AuthInputField(icon: "book.closed", placeholder: "Optional", text: $major)
+                        }
                     }
-                }
 
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Create") {
+                    // Create button
+                    Button {
                         emailTouched = true
                         guard canCreate else { return }
-
                         let profile = UserProfile(
                             id: UUID().uuidString,
                             email: email,
@@ -113,13 +113,36 @@ struct SignUpView: View {
                             year: year,
                             major: major.isEmpty ? nil : major
                         )
-
                         appState.signUp(profile: profile)
-                        dismiss()
+                    } label: {
+                        Text("Create account")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 17)
+                            .background(canCreate ? AppTheme.accentPurple : AppTheme.accentPurple.opacity(0.4))
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
-                    .disabled(!canCreate)
+
+                    // Login link
+                    NavigationLink(destination: LoginDetailView()) {
+                        HStack(spacing: 4) {
+                            Text("Already have an account?")
+                                .foregroundStyle(.secondary)
+                            Text("Login")
+                                .foregroundStyle(AppTheme.accentPurple)
+                                .fontWeight(.semibold)
+                        }
+                        .font(.subheadline)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.bottom, 16)
                 }
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
             }
         }
+        .navigationTitle("Create account")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

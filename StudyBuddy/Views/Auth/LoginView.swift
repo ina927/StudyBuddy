@@ -7,42 +7,68 @@
 
 import SwiftUI
 
-struct LoginView: View {
+struct LoginDetailView: View {
     @EnvironmentObject private var appState: AppState
+    @Environment(\.dismiss) private var dismiss
 
-    @State private var email = ""
+    @State private var email    = ""
     @State private var password = ""
     @State private var showError = false
 
-    private var canLogin: Bool {
-        !email.isEmpty && !password.isEmpty
-    }
+    private var canLogin: Bool { !email.isEmpty && !password.isEmpty }
 
     var body: some View {
-        VStack(spacing: 12) {
-            TextField("Student email", text: $email)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .textFieldStyle(.roundedBorder)
+        ZStack {
+            AppTheme.pageBg.ignoresSafeArea()
 
-            SecureField("Password", text: $password)
-                .textFieldStyle(.roundedBorder)
+            VStack(spacing: 24) {
+                Spacer()
 
-            if showError {
-                Text("Please enter email and password.")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
+                VStack(spacing: 14) {
+                    AuthInputField(icon: "envelope", placeholder: "University email", text: $email, keyboardType: .emailAddress)
+                    AuthInputField(icon: "lock", placeholder: "Password", text: $password, isSecure: true)
 
-            Button("Log in") {
-                guard canLogin else {
-                    showError = true
-                    return
+                    if showError {
+                        Text("Please enter your email and password.")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
                 }
-                appState.login(email: email, username: email.components(separatedBy: "@").first ?? "user")
+
+                Button {
+                    guard canLogin else { showError = true; return }
+                    appState.login(
+                        email: email,
+                        username: email.components(separatedBy: "@").first ?? "user"
+                    )
+                } label: {
+                    Text("Login")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 17)
+                        .background(canLogin ? AppTheme.accentPurple : AppTheme.accentPurple.opacity(0.4))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+
+                Spacer()
+
+                NavigationLink(destination: SignUpView()) {
+                    HStack(spacing: 4) {
+                        Text("Don't have an account?")
+                            .foregroundStyle(.secondary)
+                        Text("Create account")
+                            .foregroundStyle(AppTheme.accentPurple)
+                            .fontWeight(.semibold)
+                    }
+                    .font(.subheadline)
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, 24)
             }
-            .buttonStyle(.borderedProminent)
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 24)
         }
+        .navigationTitle("Login")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

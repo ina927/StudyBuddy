@@ -65,7 +65,6 @@ final class AppState: ObservableObject {
         )
 
         posts.insert(post, at: 0)
-        selectedTab = 0 // go to feed after posting
     }
 
     func updatePost(_ post: StudyPost) {
