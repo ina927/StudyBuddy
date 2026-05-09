@@ -10,6 +10,7 @@ import CoreLocation
 
 struct CreatePostRootView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject private var appState: AppState
     @State private var draft = CreatePostDraft()
     @State private var step = 1
     @State private var postedDraft: CreatePostDraft? = nil
@@ -17,31 +18,52 @@ struct CreatePostRootView: View {
     @State private var showBuildingDetection = false
     private let totalSteps = 3
 
+    @State private var showNearestBuildingPopup = false
+    @State private var nearestBuilding: BuildingOption?
+    @State private var shouldAutoExpandBuildingId: String?
+
     var body: some View {
         NavigationStack {
-            if let done = postedDraft {
-                PostSuccessView(draft: done) {
-                    postedDraft = nil
-                    draft = CreatePostDraft()
-                    withAnimation { step = 1 }
-                    appState.selectedTab = 0
-                }
-            } else {
-                ZStack {
-                    AppTheme.Colors.background.ignoresSafeArea()
+            ZStack {
+                AppTheme.Colors.background.ignoresSafeArea()
 
-                    Group {
-                        if step == 1 {
-                            BuildingDirectoryView { code, name, floor, asset in
-                                draft.buildingCode = code
-                                draft.buildingName = name
-                                draft.floor = floor
-                                draft.floorPlanAssetName = asset
-                                withAnimation { step = 2 }
-                            }
-                        } else if step == 2 {
-                            FloorPlanPinView(draft: $draft) {
-                                withAnimation { step = 3 }
+                Group {
+                    if step == 1 {
+                        BuildingDirectoryView(
+                            autoExpandBuildingID: shouldAutoExpandBuildingId
+                        ) { code, name, floor, asset in
+                            draft.buildingCode = code
+                            draft.buildingName = name
+                            draft.floor = floor
+                            draft.floorPlanAssetName = asset
+                            withAnimation { step = 2 }
+                        }
+                    } else if step == 2 {
+                        FloorPlanPinView(draft: $draft) {
+                            withAnimation { step = 3 }
+                        }
+                    } else {
+                        PostDetailsView(draft: $draft) {
+                            draft = CreatePostDraft()
+                            withAnimation { step = 1 }
+                        } onBackToLocation: {
+                            withAnimation { step = 2 }
+                        }
+                    }
+                }
+                .background(AppTheme.Colors.background)
+            }
+            .safeAreaInset(edge: .top) {
+                VStack(spacing: AppTheme.Spacing.xs) {
+                    HStack {
+                        if step > 1 {
+                            Button {
+                                withAnimation { step -= 1 }
+                            } label: {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundStyle(AppTheme.Colors.primary)
+                                    .frame(width: 32, height: 32)
                             }
                         } else {
                             PostDetailsView(draft: $draft) {
@@ -118,7 +140,58 @@ struct CreatePostRootView: View {
                                 showBuildingDetection = true
                             }
                         }
+
+                        Spacer()
+
+                        Text(stepTitle)
+                            .font(AppTheme.Typography.heading2)
+                            .foregroundStyle(AppTheme.Colors.textPrimary)
+
+                        Spacer()
+                        Color.clear.frame(width: 32, height: 32)
                     }
+                    .padding(.horizontal, AppTheme.Spacing.md)
+                    .padding(.top, AppTheme.Spacing.xs)
+
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(AppTheme.Colors.primaryPale)
+                            .frame(height: 4)
+
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(AppTheme.Colors.primary)
+                            .frame(height: 4)
+                            .scaleEffect(
+                                x: CGFloat(step) / CGFloat(totalSteps),
+                                y: 1,
+                                anchor: .leading
+                            )
+                            .animation(.easeInOut(duration: 0.3), value: step)
+                    }
+                }
+            }
+            .navigationBarHidden(true)
+            .onAppear {
+                appState.start()
+                if step == 1 {
+                    showNearestBuildingSuggestion()
+                }
+            }
+            .alert(
+                "Nearby Building Found",
+                isPresented: $showNearestBuildingPopup
+            ) {
+                if let b = nearestBuilding {
+                    Button("Select \(b.code)") {
+                        shouldAutoExpandBuildingId = b.id
+                    }
+                }
+                Button("No, choose another building", role: .cancel) {}
+            } message: {
+                if let b = nearestBuilding {
+                    Text("The nearest building to your current location is \(b.name) (\(b.code)).")
+                } else {
+                    Text("Please choose your building manually.")
                 }
             }
         }
@@ -130,5 +203,19 @@ struct CreatePostRootView: View {
         case 2: return "Set Location"
         default: return "New Post"
         }
+    }
+
+    private func showNearestBuildingSuggestion() {
+        guard let loc = appState.currentLoc else { return }
+        let candidates = MetadataStore.buildings
+            .map { b -> (BuildingOption, CLLocationDistance) in
+                let center = CLLocation(latitude: b.lat, longitude: b.long)
+                return (b, center.distance(from: loc))
+            }
+            .sorted(by: { $0.1 < $1.1 })
+
+        guard let nearest = candidates.first?.0 else { return }
+        nearestBuilding = nearest
+        showNearestBuildingPopup = true
     }
 }
