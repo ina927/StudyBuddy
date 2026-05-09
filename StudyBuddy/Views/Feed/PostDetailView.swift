@@ -1,34 +1,33 @@
-//
-//  PostDetailView.swift
-//  StudyBuddy
-//
-//  Created by Ina Song on 4/5/2026.
-//
-
 import SwiftUI
- 
+
 struct PostDetailView: View {
     @EnvironmentObject private var appState: AppState
     @State var post: StudyPost
     @State private var showEdit = false
- 
+
     private var isHost: Bool {
         appState.currentUser?.id == post.hostUserID
     }
- 
+
+    private var hostInfoText: String {
+        let degree = post.hostDegrees.joined(separator: ", ")
+        if let major = post.hostMajor, !major.isEmpty {
+            return "\(degree) · \(post.hostYear) · \(major)"
+        }
+        return "\(degree) · \(post.hostYear)"
+    }
+
     var body: some View {
         ZStack {
             AppTheme.Colors.background.ignoresSafeArea()
- 
+
             ScrollView {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
- 
-                    // ── Photo banner ──────────────────────────────────────
                     ZStack(alignment: .bottomLeading) {
                         Rectangle()
                             .fill(AppTheme.Colors.primaryLight.opacity(0.45))
                             .frame(height: 200)
- 
+
                         if let asset = post.photoAssetName {
                             Image(asset)
                                 .resizable()
@@ -45,11 +44,8 @@ struct PostDetailView: View {
                     }
                     .cornerRadius(AppTheme.Radius.lg)
                     .padding(.horizontal, AppTheme.Spacing.md)
- 
-                    // ── Main info card ────────────────────────────────────
+
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
- 
-                        // Status + title
                         HStack(alignment: .top) {
                             Text(post.title)
                                 .font(AppTheme.Typography.heading1)
@@ -57,19 +53,22 @@ struct PostDetailView: View {
                             Spacer()
                             PostStatusBadge(status: post.computedStatus)
                         }
- 
-                        // Body text
-                        Text(post.bodyText)
-                            .font(AppTheme.Typography.bodyMedium)
-                            .foregroundStyle(AppTheme.Colors.textSecondary)
- 
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(post.hostUsername)
+                                .font(AppTheme.Typography.label.weight(.semibold))
+                                .foregroundStyle(AppTheme.Colors.textPrimary)
+                            Text(hostInfoText)
+                                .font(AppTheme.Typography.bodySmall)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                        }
+
                         Divider().background(AppTheme.Colors.divider)
- 
-                        // Time — lavender pill
-                        HStack(spacing: 4) {
+
+                        HStack(spacing: 6) {
                             Image(systemName: "clock")
                                 .font(.system(size: 11))
-                            Text("\(post.startTime.formatted(date: .omitted, time: .shortened))–\(post.endTime.formatted(date: .omitted, time: .shortened)), today")
+                            Text("\(post.startTime.formatted(date: .abbreviated, time: .shortened)) - \(post.endTime.formatted(date: .abbreviated, time: .shortened))")
                                 .font(AppTheme.Typography.bodySmall)
                         }
                         .foregroundStyle(AppTheme.Colors.timePillText)
@@ -77,8 +76,7 @@ struct PostDetailView: View {
                         .padding(.vertical, AppTheme.Spacing.xxs + 1)
                         .background(AppTheme.Colors.timePill)
                         .cornerRadius(AppTheme.Radius.pill)
- 
-                        // Location
+
                         HStack(spacing: 4) {
                             Image(systemName: "mappin.circle.fill")
                                 .font(.system(size: 11))
@@ -87,8 +85,7 @@ struct PostDetailView: View {
                                 .font(AppTheme.Typography.bodySmall)
                                 .foregroundStyle(AppTheme.Colors.textSecondary)
                         }
- 
-                        // Capacity
+
                         HStack(spacing: 4) {
                             Image(systemName: "person.2")
                                 .font(.system(size: 11))
@@ -97,30 +94,34 @@ struct PostDetailView: View {
                                 .font(AppTheme.Typography.bodySmall)
                                 .foregroundStyle(AppTheme.Colors.textSecondary)
                         }
- 
-                        // Subject tags
-                        HStack(spacing: AppTheme.Spacing.xs) {
-                            ForEach(post.subjects, id: \.self) { subject in
-                                HStack(spacing: 3) {
-                                    Image(systemName: "book.closed")
-                                        .font(.system(size: 9))
+
+                        Text(post.vibe)
+                            .font(AppTheme.Typography.labelSmall.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, AppTheme.Spacing.sm)
+                            .padding(.vertical, AppTheme.Spacing.xxs)
+                            .background(AppTheme.Colors.primary)
+                            .cornerRadius(AppTheme.Radius.pill)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: AppTheme.Spacing.xs) {
+                                ForEach(post.subjects, id: \.self) { subject in
                                     Text(subject)
                                         .font(AppTheme.Typography.labelSmall)
+                                        .foregroundStyle(AppTheme.Colors.textSecondary)
+                                        .padding(.horizontal, AppTheme.Spacing.sm)
+                                        .padding(.vertical, AppTheme.Spacing.xxs)
+                                        .background(Color.gray.opacity(0.18))
+                                        .clipShape(Capsule())
                                 }
-                                .foregroundStyle(AppTheme.Colors.tagText)
-                                .padding(.horizontal, AppTheme.Spacing.sm)
-                                .padding(.vertical, AppTheme.Spacing.xxs)
-                                .background(AppTheme.Colors.tag)
-                                .cornerRadius(AppTheme.Radius.pill)
                             }
                         }
- 
+
                         Divider().background(AppTheme.Colors.divider)
- 
-                        // Detail rows
-                        DetailRow(label: "Faculty",     value: post.hostDegrees.first ?? "-")
-                        DetailRow(label: "Vibes",       value: post.vibe)
-                        DetailRow(label: "Description", value: post.bodyText)
+
+                        Text(post.bodyText)
+                            .font(AppTheme.Typography.bodyMedium)
+                            .foregroundStyle(AppTheme.Colors.textSecondary)
                     }
                     .padding(AppTheme.Spacing.md)
                     .background(AppTheme.Colors.surface)
@@ -130,24 +131,44 @@ struct PostDetailView: View {
                             x: AppTheme.Shadows.card.x,
                             y: AppTheme.Shadows.card.y)
                     .padding(.horizontal, AppTheme.Spacing.md)
- 
-                    // ── Host controls ─────────────────────────────────────
+
                     if isHost {
                         VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-                            Text("Host Controls")
+                            Text("Session Management")
                                 .font(AppTheme.Typography.heading2)
                                 .foregroundStyle(AppTheme.Colors.textPrimary)
- 
-                            Picker("Status", selection: Binding(
-                                get: { post.statusOverride ?? post.computedStatus },
-                                set: { post.statusOverride = $0; appState.updatePost(post) }
-                            )) {
-                                Text("Not Started").tag(StudyPost.Status.notStarted)
-                                Text("Ongoing").tag(StudyPost.Status.ongoing)
-                                Text("Full").tag(StudyPost.Status.full)
-                                Text("Finished").tag(StudyPost.Status.finished)
+
+                            Text("Time-based status updates automatically. Use these actions only when needed.")
+                                .font(AppTheme.Typography.bodySmall)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+
+                            HStack(spacing: AppTheme.Spacing.sm) {
+                                Button {
+                                    post.statusOverride = .full
+                                    appState.updatePost(post)
+                                } label: {
+                                    Text("Mark as Full")
+                                        .font(AppTheme.Typography.label.weight(.semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, AppTheme.Spacing.sm)
+                                        .background(AppTheme.Colors.busyText)
+                                        .cornerRadius(AppTheme.Radius.md)
+                                }
+
+                                Button {
+                                    post.statusOverride = .finished
+                                    appState.updatePost(post)
+                                } label: {
+                                    Text("End Session")
+                                        .font(AppTheme.Typography.label.weight(.semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, AppTheme.Spacing.sm)
+                                        .background(AppTheme.Colors.unavailableText)
+                                        .cornerRadius(AppTheme.Radius.md)
+                                }
                             }
-                            .pickerStyle(.segmented)
                         }
                         .padding(AppTheme.Spacing.md)
                         .background(AppTheme.Colors.surface)
