@@ -39,6 +39,11 @@ struct FloorPlanPinView: View {
                             ForEach(sameBuildingFloors, id: \.self) { floor in
                                 Button(floor.replacingOccurrences(of: "Level ", with: "L")) {
                                     draft.floor = floor
+                                    // ── 층 바꿀 때 지도 이미지도 업데이트 ──
+                                    if let building = MetadataStore.buildings.first(where: { $0.code == draft.buildingCode }),
+                                       let floorData = building.floors.first(where: { $0.name == floor }) {
+                                        draft.floorPlanAssetName = floorData.floorPlanAssetName
+                                    }
                                 }
                                 .font(AppTheme.Typography.labelSmall)
                                 .foregroundStyle(
@@ -60,7 +65,7 @@ struct FloorPlanPinView: View {
                     .frame(width: 52)
                     .background(AppTheme.Colors.inputBg)
  
-                    // Floor plan + draggable pin
+                    // Floor plan map + draggable pin
                     ZStack {
                         AppTheme.Colors.primaryPale.opacity(0.4)
  
@@ -128,7 +133,6 @@ struct FloorPlanPinView: View {
                             .font(AppTheme.Typography.label)
                             .foregroundStyle(AppTheme.Colors.locationText)
                     }
- 
                     PhotosPicker(selection: $photoItem, matching: .images) {
                         HStack(spacing: AppTheme.Spacing.sm) {
                             ZStack {
@@ -140,7 +144,6 @@ struct FloorPlanPinView: View {
                                     .font(.system(size: 22))
                                     .foregroundStyle(AppTheme.Colors.primary)
                             }
- 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(draft.photoAssetName == nil
                                      ? "Tap to add a photo"
@@ -153,7 +156,6 @@ struct FloorPlanPinView: View {
                                     .font(AppTheme.Typography.bodySmall)
                                     .foregroundStyle(AppTheme.Colors.textTertiary)
                             }
- 
                             Spacer()
                         }
                         .padding(AppTheme.Spacing.sm)
@@ -181,7 +183,7 @@ struct FloorPlanPinView: View {
             }
             .padding(AppTheme.Spacing.md)
         }
-        .background(AppTheme.Colors.background) // ← 나머지 배경
+        .background(AppTheme.Colors.background)
         .onChange(of: photoItem) {
             if photoItem != nil {
                 draft.photoAssetName = "room_photo_1"
