@@ -12,21 +12,63 @@ struct AuthFlowView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                Text("StudyBuddy")
-                    .font(.largeTitle.bold())
+            ZStack {
+                AppTheme.Colors.primaryPale.ignoresSafeArea()
 
-                Text("Find study partners around campus")
-                    .foregroundStyle(.secondary)
+                VStack(spacing: 0) {
+                    Spacer()
 
-                LoginView()
+                    VStack(spacing: 16) {
+                        StudyBuddyLogo(size: 100)
 
-                Button("Need an account? Sign up") {
-                    showSignUp = true
+                        Text("StudyBuddy")
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundStyle(Color.black)
+
+                        Text("Find your study buddy!")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    VStack(spacing: 14) {
+                        NavigationLink(destination: LoginDetailView()) {
+                            Text("Login")
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(AppTheme.Colors.primary)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 17)
+                                .background(Color.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(AppTheme.Colors.primary, lineWidth: 1.5)
+                                )
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            showSignUp = true
+                        } label: {
+                            Text("Create account")
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(AppTheme.Colors.primary)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 17)
+                                .background(Color.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(AppTheme.Colors.primary, lineWidth: 1.5)
+                                )
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 50)
                 }
-                .font(.footnote)
             }
-            .padding()
+            .navigationBarHidden(true)
             .sheet(isPresented: $showSignUp) {
                 SignUpView()
             }

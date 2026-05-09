@@ -17,6 +17,8 @@ struct UserProfile: Identifiable, Codable {
     var degrees: [String]
     var year: String
     var major: String?
+    var avatarData: Data? = nil
+
     var profilePic: String?
     
     func convertFirestore() -> [String: Any] {
