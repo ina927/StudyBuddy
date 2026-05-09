@@ -36,7 +36,10 @@ struct MainTabView: View {
 struct ProfileView: View {
     @EnvironmentObject private var appState: AppState
     @State private var isEditing = false
-    @State private var avatarItem: PhotosPickerItem? = nil
+    @State private var profileImage: UIImage? = nil
+    @State private var showPhotoOptions = false
+    @State private var showCamera = false
+    @State private var showLibrary = false
 
     enum ProfileTab { case profile, posts }
     @State private var profileTab: ProfileTab = .profile
@@ -89,45 +92,75 @@ struct ProfileView: View {
     }
 
     private var avatarBadge: some View {
-        PhotosPicker(selection: $avatarItem, matching: .images) {
-            ZStack(alignment: .bottomTrailing) {
-                Group {
-                    if let data = appState.currentUser?.avatarData,
-                       let uiImage = UIImage(data: data) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                    } else {
-                        Circle()
-                            .fill(AppTheme.Colors.primaryPale)
-                            .overlay(
-                                Text(initials)
-                                    .font(.title.weight(.bold))
-                                    .foregroundStyle(AppTheme.Colors.primary)
-                            )
+        ZStack(alignment: .bottomTrailing) {
+            Group {
+                if let pic = appState.currentUser?.profilePic,
+                   let url = URL(string: pic) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        default:
+                            Circle()
+                                .fill(AppTheme.Colors.primaryPale)
+                                .overlay(
+                                    Text(initials)
+                                        .font(.title.weight(.bold))
+                                        .foregroundStyle(AppTheme.Colors.primary)
+                                )
+                        }
                     }
+                } else {
+                    Circle()
+                        .fill(AppTheme.Colors.primaryPale)
+                        .overlay(
+                            Text(initials)
+                                .font(.title.weight(.bold))
+                                .foregroundStyle(AppTheme.Colors.primary)
+                        )
                 }
-                .frame(width: 80, height: 80)
-                .clipShape(Circle())
+            }
+            .frame(width: 80, height: 80)
+            .clipShape(Circle())
 
+            Button {
+                showPhotoOptions = true
+            } label: {
                 Circle()
                     .fill(AppTheme.Colors.accent)
                     .frame(width: 28, height: 28)
                     .overlay(
-                        Image(systemName: "pencil")
+                        Image(systemName: "camera.fill")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.white)
                     )
-                    .offset(x: 2, y: 2)
             }
+            .offset(x: 2, y: 2)
         }
-        .onChange(of: avatarItem) { _, newItem in
+        .confirmationDialog("Update profile photo", isPresented: $showPhotoOptions, titleVisibility: .visible) {
+            Button("Take a photo") { showCamera = true }
+            Button("Choose from library") { showLibrary = true }
+            Button("Cancel", role: .cancel) { }
+        }
+        .sheet(isPresented: $showCamera) {
+            CameraView(image: $profileImage, sourceType: .camera)
+                .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showLibrary) {
+            CameraView(image: $profileImage, sourceType: .photoLibrary)
+                .ignoresSafeArea()
+        }
+        .onChange(of: profileImage) {
+            guard let image = profileImage, let user = appState.currentUser else { return }
             Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                    guard var user = appState.currentUser else { return }
-                    user.avatarData = data
+                if let url = await appState.uploadImage(image, identifier: user.id, folder: "profile") {
+                    var updated = user
+                    updated.profilePic = url
+                    appState.saveUser(updated)
                     await MainActor.run {
-                        appState.currentUser = user
+                        appState.currentUser = updated
                     }
                 }
             }

@@ -147,7 +147,6 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         guard let user = currentUser else { return }
         let postId = UUID().uuidString
         Task {
-            await MainActor.run { isLoading = true }
             
             var imageURL: String? = nil
             if let image = draft.postImage {
@@ -180,7 +179,6 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
             await MainActor.run {
                 posts.insert(post, at: 0)
                 selectedTab = 0
-                isLoading = false
             }
             savePost(post)
         }

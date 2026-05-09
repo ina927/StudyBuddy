@@ -126,10 +126,10 @@ struct PostDetailsView: View {
                 fieldBlock(title: "Vibe", required: true) {
                     HStack {
                         Picker("Vibe", selection: $draft.vibe) {
-                            ForEach(MetadataStore.vibes, id: \.self) { 
+                            ForEach(MetadataStore.vibes, id: \.self) {
                                 Text($0)
                                     .font(AppTheme.Typography.bodyMedium)
-                                    .tag($0) 
+                                    .tag($0)
                             }
                         }
                         .pickerStyle(.menu)
@@ -227,4 +227,3 @@ struct PostFormLabel: View {
         }
     }
 }
-
