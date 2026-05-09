@@ -6,21 +6,28 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct CreatePostRootView: View {
+    @EnvironmentObject private var appState: AppState
     @State private var draft = CreatePostDraft()
     @State private var step = 1
     private let totalSteps = 3
- 
+
+    @State private var showNearestBuildingPopup = false
+    @State private var nearestBuilding: BuildingOption?
+    @State private var shouldAutoExpandBuildingId: String?
+
     var body: some View {
         NavigationStack {
             ZStack {
                 AppTheme.Colors.background.ignoresSafeArea()
- 
-                // ── Step content ──────────────────────────────────────────
+
                 Group {
                     if step == 1 {
-                        BuildingDirectoryView { code, name, floor, asset in
+                        BuildingDirectoryView(
+                            autoExpandBuildingID: shouldAutoExpandBuildingId
+                        ) { code, name, floor, asset in
                             draft.buildingCode = code
                             draft.buildingName = name
                             draft.floor = floor
@@ -35,19 +42,16 @@ struct CreatePostRootView: View {
                         PostDetailsView(draft: $draft) {
                             draft = CreatePostDraft()
                             withAnimation { step = 1 }
+                        } onBackToLocation: {
+                            withAnimation { step = 2 }
                         }
                     }
                 }
                 .background(AppTheme.Colors.background)
             }
- 
-            // ── Custom nav bar + progress bar ─────────────────────────────
             .safeAreaInset(edge: .top) {
                 VStack(spacing: AppTheme.Spacing.xs) {
- 
-                    // Nav row
                     HStack {
-                        // Back button
                         if step > 1 {
                             Button {
                                 withAnimation { step -= 1 }
@@ -60,39 +64,24 @@ struct CreatePostRootView: View {
                         } else {
                             Color.clear.frame(width: 32, height: 32)
                         }
- 
+
                         Spacer()
- 
-                        // Step title
+
                         Text(stepTitle)
                             .font(AppTheme.Typography.heading2)
                             .foregroundStyle(AppTheme.Colors.textPrimary)
- 
+
                         Spacer()
- 
-                        // Post button (step 3 only)
-                        if step == 3 {
-                            Button {
-                                // Post action is handled inside PostDetailsView
-                            } label: {
-                                Text("Post")
-                                    .font(AppTheme.Typography.label.weight(.semibold))
-                                    .foregroundStyle(AppTheme.Colors.primary)
-                                    .frame(width: 32, height: 32)
-                            }
-                        } else {
-                            Color.clear.frame(width: 32, height: 32)
-                        }
+                        Color.clear.frame(width: 32, height: 32)
                     }
                     .padding(.horizontal, AppTheme.Spacing.md)
                     .padding(.top, AppTheme.Spacing.xs)
- 
-                    // Progress bar
+
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 4)
                             .fill(AppTheme.Colors.primaryPale)
                             .frame(height: 4)
- 
+
                         RoundedRectangle(cornerRadius: 4)
                             .fill(AppTheme.Colors.primary)
                             .frame(height: 4)
@@ -109,9 +98,32 @@ struct CreatePostRootView: View {
                 .background(AppTheme.Colors.headerBackground)
             }
             .navigationBarHidden(true)
+            .onAppear {
+                appState.start()
+                if step == 1 {
+                    showNearestBuildingSuggestion()
+                }
+            }
+            .alert(
+                "Nearby Building Found",
+                isPresented: $showNearestBuildingPopup
+            ) {
+                if let b = nearestBuilding {
+                    Button("Select \(b.code)") {
+                        shouldAutoExpandBuildingId = b.id
+                    }
+                }
+                Button("No, choose another building", role: .cancel) {}
+            } message: {
+                if let b = nearestBuilding {
+                    Text("The nearest building to your current location is \(b.name) (\(b.code)).")
+                } else {
+                    Text("Please choose your building manually.")
+                }
+            }
         }
     }
- 
+
     private var stepTitle: String {
         switch step {
         case 1: return "Create Post"
@@ -119,5 +131,18 @@ struct CreatePostRootView: View {
         default: return "New Post"
         }
     }
-}
 
+    private func showNearestBuildingSuggestion() {
+        guard let loc = appState.currentLoc else { return }
+        let candidates = MetadataStore.buildings
+            .map { b -> (BuildingOption, CLLocationDistance) in
+                let center = CLLocation(latitude: b.lat, longitude: b.long)
+                return (b, center.distance(from: loc))
+            }
+            .sorted(by: { $0.1 < $1.1 })
+
+        guard let nearest = candidates.first?.0 else { return }
+        nearestBuilding = nearest
+        showNearestBuildingPopup = true
+    }
+}
