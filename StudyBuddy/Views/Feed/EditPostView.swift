@@ -6,149 +6,164 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct EditPostView: View {
     @Binding var post: StudyPost
     @Environment(\.dismiss) private var dismiss
- 
+
+    @State private var draft = CreatePostDraft()
+    @State private var step = 3
+    private let totalSteps = 3
+
+    @State private var hasInitialized = false
+
     var body: some View {
         NavigationStack {
             ZStack {
                 AppTheme.Colors.background.ignoresSafeArea()
- 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: AppTheme.Spacing.lg) {
- 
-                        // ── Title ─────────────────────────────────────────
-                        PostFormLabel(text: "Title", required: true)
- 
-                        TextField("Title", text: $post.title)
-                            .font(AppTheme.Typography.bodyMedium)
-                            .foregroundStyle(AppTheme.Colors.textPrimary)
-                            .padding(AppTheme.Spacing.md)
-                            .background(AppTheme.Colors.inputBg)
-                            .cornerRadius(AppTheme.Radius.lg)
- 
-                        // ── Description ───────────────────────────────────
-                        PostFormLabel(text: "Post Body", required: false)
- 
-                        TextField("What are you looking for?",
-                                  text: $post.bodyText, axis: .vertical)
-                            .font(AppTheme.Typography.bodyMedium)
-                            .foregroundStyle(AppTheme.Colors.textPrimary)
-                            .lineLimit(5, reservesSpace: true)
-                            .padding(AppTheme.Spacing.md)
-                            .background(AppTheme.Colors.inputBg)
-                            .cornerRadius(AppTheme.Radius.lg)
- 
-                        // ── Study Period ──────────────────────────────────
-                        PostFormLabel(text: "Study Period", required: true)
- 
-                        HStack(spacing: AppTheme.Spacing.sm) {
-                            // Start
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Start")
-                                    .font(AppTheme.Typography.labelSmall)
-                                    .foregroundStyle(AppTheme.Colors.textTertiary)
-                                DatePicker("", selection: $post.startTime,
-                                           displayedComponents: .hourAndMinute)
-                                    .labelsHidden()
-                            }
-                            .padding(AppTheme.Spacing.md)
-                            .frame(maxWidth: .infinity)
-                            .background(AppTheme.Colors.inputBg)
-                            .cornerRadius(AppTheme.Radius.lg)
- 
-                            // End
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("End")
-                                    .font(AppTheme.Typography.labelSmall)
-                                    .foregroundStyle(AppTheme.Colors.textTertiary)
-                                DatePicker("", selection: $post.endTime,
-                                           displayedComponents: .hourAndMinute)
-                                    .labelsHidden()
-                            }
-                            .padding(AppTheme.Spacing.md)
-                            .frame(maxWidth: .infinity)
-                            .background(AppTheme.Colors.inputBg)
-                            .cornerRadius(AppTheme.Radius.lg)
+
+                Group {
+                    if step == 1 {
+                        BuildingDirectoryView(
+                            autoExpandBuildingID: nil
+                        ) { code, name, floor, asset in
+                            draft.buildingCode = code
+                            draft.buildingName = name
+                            draft.floor = floor
+                            draft.floorPlanAssetName = asset
+                            withAnimation { step = 2 }
                         }
- 
-                        if post.endTime <= post.startTime {
-                            Text("End time must be after start time.")
-                                .font(AppTheme.Typography.bodySmall)
-                                .foregroundStyle(AppTheme.Colors.locationText)
+                    } else if step == 2 {
+                        FloorPlanPinView(draft: $draft) {
+                            withAnimation { step = 3 }
                         }
- 
-                        // ── Capacity ──────────────────────────────────────
-                        PostFormLabel(text: "Capacity", required: true)
- 
-                        HStack {
-                            // Minus button
-                            Button {
-                                if post.capacity > 1 { post.capacity -= 1 }
-                            } label: {
-                                Image(systemName: "minus")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(AppTheme.Colors.primary)
-                                    .frame(width: 36, height: 36)
-                                    .background(AppTheme.Colors.primaryPale)
-                                    .cornerRadius(AppTheme.Radius.pill)
+                    } else {
+                        PostDetailsView(
+                            draft: $draft,
+                            onPosted: {
+                                saveChangesToPost()
+                                dismiss()
+                            },
+                            onBackToLocation: {
+                                withAnimation { step = 2 }
                             }
- 
-                            Spacer()
- 
-                            VStack(spacing: 2) {
-                                Text("\(post.capacity)")
-                                    .font(AppTheme.Typography.heading2)
-                                    .foregroundStyle(AppTheme.Colors.textPrimary)
-                                Text("people")
-                                    .font(AppTheme.Typography.bodySmall)
-                                    .foregroundStyle(AppTheme.Colors.textTertiary)
-                            }
- 
-                            Spacer()
- 
-                            // Plus button
-                            Button {
-                                if post.capacity < 20 { post.capacity += 1 }
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(AppTheme.Colors.primary)
-                                    .frame(width: 36, height: 36)
-                                    .background(AppTheme.Colors.primaryPale)
-                                    .cornerRadius(AppTheme.Radius.pill)
-                            }
-                        }
-                        .padding(AppTheme.Spacing.md)
-                        .background(AppTheme.Colors.inputBg)
-                        .cornerRadius(AppTheme.Radius.lg)
- 
-                        // ── Save button ───────────────────────────────────
-                        Button { dismiss() } label: {
-                            Text("Save Changes")
-                                .font(AppTheme.Typography.label.weight(.semibold))
-                                .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, AppTheme.Spacing.sm)
-                                .background(AppTheme.Colors.primary)
-                                .cornerRadius(AppTheme.Radius.pill)
-                        }
-                        .padding(.top, AppTheme.Spacing.xs)
+                        )
                     }
-                    .padding(AppTheme.Spacing.md)
                 }
+                .background(AppTheme.Colors.background)
             }
-            .navigationTitle("Edit Post")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .font(AppTheme.Typography.label.weight(.semibold))
-                        .foregroundStyle(AppTheme.Colors.primary)
+            .safeAreaInset(edge: .top) {
+                VStack(spacing: AppTheme.Spacing.xs) {
+                    HStack {
+                        if step > 1 {
+                            Button {
+                                withAnimation { step -= 1 }
+                            } label: {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundStyle(AppTheme.Colors.primary)
+                                    .frame(width: 32, height: 32)
+                            }
+                        } else {
+                            Button {
+                                dismiss()
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundStyle(AppTheme.Colors.primary)
+                                    .frame(width: 32, height: 32)
+                            }
+                        }
+
+                        Spacer()
+
+                        Text(stepTitle)
+                            .font(AppTheme.Typography.heading2)
+                            .foregroundStyle(AppTheme.Colors.textPrimary)
+
+                        Spacer()
+                        Color.clear.frame(width: 32, height: 32)
+                    }
+                    .padding(.horizontal, AppTheme.Spacing.md)
+                    .padding(.top, AppTheme.Spacing.xs)
+
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(AppTheme.Colors.primaryPale)
+                            .frame(height: 4)
+
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(AppTheme.Colors.primary)
+                            .frame(height: 4)
+                            .scaleEffect(
+                                x: CGFloat(step) / CGFloat(totalSteps),
+                                y: 1,
+                                anchor: .leading
+                            )
+                            .animation(.easeInOut(duration: 0.3), value: step)
+                    }
+                    .padding(.horizontal, AppTheme.Spacing.md)
+                    .padding(.bottom, AppTheme.Spacing.xs)
+                }
+                .background(AppTheme.Colors.headerBackground)
+            }
+            .navigationBarHidden(true)
+            .onAppear {
+                if !hasInitialized {
+                    initializeDraftFromPost()
+                    hasInitialized = true
                 }
             }
         }
+    }
+
+    private var stepTitle: String {
+        switch step {
+        case 1: return "Edit Post"
+        case 2: return "Set Location"
+        default: return "Edit Details"
+        }
+    }
+
+    private func initializeDraftFromPost() {
+        draft.buildingCode = post.buildingCode
+        draft.buildingName = post.buildingName
+        draft.floor = post.floor
+        draft.floorPlanAssetName = post.floorPlanAssetName
+        draft.pinX = post.pinX
+        draft.pinY = post.pinY
+        draft.locationDescription = post.locationDescription
+        draft.title = post.title
+        draft.postBody = post.bodyText
+        draft.subjects = post.subjects
+        draft.vibe = post.vibe
+        draft.capacity = post.capacity
+        draft.startTime = post.startTime
+        draft.endTime = post.endTime
+        draft.existingPhotoAssetName = post.photoAssetName
+    }
+
+    private func saveChangesToPost() {
+        post.buildingCode = draft.buildingCode
+        post.buildingName = draft.buildingName
+        post.floor = draft.floor
+        post.floorPlanAssetName = draft.floorPlanAssetName
+        post.pinX = draft.pinX
+        post.pinY = draft.pinY
+        post.locationDescription = draft.locationDescription
+        post.title = draft.title
+        post.bodyText = draft.postBody
+        post.subjects = draft.subjects
+        post.vibe = draft.vibe
+        post.capacity = draft.capacity
+        post.startTime = draft.startTime
+        post.endTime = draft.endTime
+        // Update photo if a new one was selected
+        if draft.postImage != nil {
+            // In a real app, upload to Firebase Storage and get URL
+            post.photoAssetName = "updated_photo_\(UUID().uuidString)"
+        }
+        // Keep existing photo if no new photo was selected
     }
 }
