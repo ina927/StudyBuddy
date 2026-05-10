@@ -12,6 +12,7 @@ struct PostDetailsView: View {
     @Binding var draft: CreatePostDraft
     let onPosted: () -> Void
     let onBackToLocation: () -> Void
+    var isEditMode: Bool = false
 
     @State private var selectedDate = Calendar.current.startOfDay(for: Date())
     @State private var startTime = Date()
@@ -177,7 +178,9 @@ struct PostDetailsView: View {
                     Task {
                         draft.startTime = normalizedStart
                         draft.endTime = normalizedEnd
-                        await appState.addPost(from: draft)
+                        if !isEditMode {
+                            await appState.addPost(from: draft)
+                        }
                         await MainActor.run {
                             isPosting = false
                             onPosted()
@@ -190,7 +193,7 @@ struct PostDetailsView: View {
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 .scaleEffect(0.9)
                         }
-                        Text(isPosting ? "Posting..." : "Post")
+                        Text(isPosting ? (isEditMode ? "Saving..." : "Posting...") : (isEditMode ? "Save Changes" : "Post"))
                             .font(AppTheme.Typography.label.weight(.semibold))
                             .foregroundStyle(.white)
                     }
@@ -204,7 +207,14 @@ struct PostDetailsView: View {
             .padding(AppTheme.Spacing.md)
         }
         .onAppear {
-            selectedDate = Calendar.current.startOfDay(for: Date())
+            if isEditMode {
+                // Initialize with existing times from draft
+                selectedDate = Calendar.current.startOfDay(for: draft.startTime)
+                startTime = draft.startTime
+                endTime = draft.endTime
+            } else {
+                selectedDate = Calendar.current.startOfDay(for: Date())
+            }
         }
     }
 

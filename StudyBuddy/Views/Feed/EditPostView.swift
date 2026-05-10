@@ -47,7 +47,8 @@ struct EditPostView: View {
                             },
                             onBackToLocation: {
                                 withAnimation { step = 2 }
-                            }
+                            },
+                            isEditMode: true
                         )
                     }
                 }

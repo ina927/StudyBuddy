@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
  
 struct DegreeOption: Identifiable, Codable, Hashable {
     let id: String
@@ -169,6 +170,21 @@ struct MetadataStore {
         "Peer Teaching",
         "Discussion Heavy",
     ]
+    
+    static func vibeColor(_ vibe: String) -> Color {
+        switch vibe {
+        case "Silent Focus": return Color(red: 90/255, green: 145/255, blue: 175/255)
+        case "Casual Co-study": return Color(red: 220/255, green: 160/255, blue: 115/255)
+        case "Problem Solving": return Color(red: 210/255, green: 130/255, blue: 100/255)
+        case "Exam Revision": return Color(red: 210/255, green: 115/255, blue: 140/255)
+        case "Exam Sprint": return Color(red: 210/255, green: 115/255, blue: 140/255)
+        case "Assignment Sprint": return Color(red: 195/255, green: 140/255, blue: 95/255)
+        case "Peer Teaching": return Color(red: 95/255, green: 160/255, blue: 160/255)
+        case "Discussion Heavy": return Color(red: 185/255, green: 155/255, blue: 120/255)
+        case "Accountability Session": return Color(red: 215/255, green: 140/255, blue: 125/255)
+        default: return Color(red: 140/255, green: 150/255, blue: 165/255)
+        }
+    }
  
     // MARK: - Floor plan asset names (from Assets.xcassets)
     private static let floorPlanAssets: [String: String] = [
