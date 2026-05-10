@@ -75,11 +75,15 @@ struct SignUpView: View {
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                 Picker("Year", selection: $year) {
-                                    ForEach(["Year 1", "Year 2", "Year 3", "Year 4+"], id: \.self) { Text($0) }
+                                    ForEach(["Year 1", "Year 2", "Year 3", "Year 4+"], id: \.self) { 
+                                        Text($0)
+                                            .font(AppTheme.Typography.bodyMedium)
+                                    }
                                 }
                                 .pickerStyle(.menu)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 13)
+                                .tint(AppTheme.Colors.textPrimary)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 14)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(AppTheme.Colors.inputBg)
                                 .clipShape(RoundedRectangle(cornerRadius: 14))
