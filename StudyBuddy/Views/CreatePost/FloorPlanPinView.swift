@@ -29,6 +29,7 @@ struct FloorButton: View {
 struct FloorSidebar: View {
     let floors: [String]
     @Binding var selectedFloor: String
+    let onFloorChange: (String) -> Void
 
     var body: some View {
         ScrollView {
@@ -36,6 +37,7 @@ struct FloorSidebar: View {
                 ForEach(floors, id: \.self) { floor in
                     FloorButton(floor: floor, isSelected: selectedFloor == floor) {
                         selectedFloor = floor
+                        onFloorChange(floor)
                     }
                 }
             }
@@ -53,9 +55,11 @@ struct FloorPlanCanvas: View {
     var body: some View {
         ZStack {
             AppTheme.Colors.primaryPale.opacity(0.4)
+
             Image(draft.floorPlanAssetName)
                 .resizable()
                 .scaledToFit()
+
             GeometryReader { geo in
                 VStack(spacing: 2) {
                     Text("I'm here")
@@ -65,6 +69,7 @@ struct FloorPlanCanvas: View {
                         .padding(.vertical, 3)
                         .background(AppTheme.Colors.locationText)
                         .clipShape(Capsule())
+
                     Image(systemName: "mappin")
                         .font(.system(size: 30, weight: .bold))
                         .foregroundStyle(AppTheme.Colors.locationText)
@@ -146,6 +151,7 @@ struct FloorPlanPinView: View {
                             .font(AppTheme.Typography.label)
                             .foregroundStyle(AppTheme.Colors.locationText)
                     }
+
                     TextField(
                         "Describe your location (room number, table area, etc.)",
                         text: $draft.locationDescription,
@@ -183,5 +189,14 @@ struct FloorPlanPinView: View {
             }
             updateFloorPlanForSelectedFloor(draft.floor)
         }
+    }
+
+    private func updateFloorPlanForSelectedFloor(_ floor: String) {
+        guard
+            let building = MetadataStore.buildings.first(where: { $0.code == draft.buildingCode }),
+            let floorData = building.floors.first(where: { $0.name == floor })
+        else { return }
+
+        draft.floorPlanAssetName = floorData.floorPlanAssetName
     }
 }
