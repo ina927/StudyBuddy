@@ -23,7 +23,7 @@ struct MyPostCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .shadow(color: .black.opacity(0.07), radius: 4, x: 0, y: 2)
         .sheet(isPresented: $showingEdit) {
-            PostStatusEditSheet(post: $post)
+            EditPostView(post: $post)
         }
     }
 
@@ -88,52 +88,5 @@ struct MyPostCard: View {
         let dayFmt = DateFormatter()
         dayFmt.dateFormat = "MMM d"
         return "\(start) - \(end), \(dayFmt.string(from: post.startTime))"
-    }
-}
-
-struct PostStatusEditSheet: View {
-    @EnvironmentObject private var appState: AppState
-    @Binding var post: StudyPost
-    @Environment(\.dismiss) private var dismiss
-    @State private var selected: StudyPost.Status = .notStarted
-
-    var body: some View {
-        NavigationStack {
-            List {
-                ForEach(StudyPost.Status.allCases, id: \.self) { status in
-                    Button {
-                        selected = status
-                    } label: {
-                        HStack {
-                            PostStatusBadge(status: status)
-                            Spacer()
-                            if selected == status {
-                                Image(systemName: "checkmark")
-                                    .foregroundStyle(AppTheme.Colors.primary)
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .navigationTitle("Update Status")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        post.statusOverride = selected
-                        appState.updatePost(post)
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
-            .onAppear {
-                selected = post.statusOverride ?? post.computedStatus
-            }
-        }
     }
 }

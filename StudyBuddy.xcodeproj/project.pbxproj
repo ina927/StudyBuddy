@@ -19,6 +19,7 @@
 		16260F432FA719B1000B7CE5 /* StudyBuddy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StudyBuddy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		267801E52FAEFD1500657001 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		267801E72FAEFD2700657001 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		267805E62FB0A3F800657001 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -50,6 +51,7 @@
 				16260F452FA719B1000B7CE5 /* StudyBuddy */,
 				16260F442FA719B1000B7CE5 /* Products */,
 				267801E52FAEFD1500657001 /* GoogleService-Info.plist */,
+				267805E62FB0A3F800657001 /* GoogleService-Info.plist */,
 				267801E72FAEFD2700657001 /* GoogleService-Info.plist */,
 				9F7638B92FA9B39C00ABDDA9 /* Frameworks */,
 			);
