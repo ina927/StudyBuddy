@@ -16,11 +16,13 @@ struct PostDetailsView: View {
     @State private var selectedDate = Calendar.current.startOfDay(for: Date())
     @State private var startTime = Date()
     @State private var endTime = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
+    @State private var isPosting = false
 
     private var normalizedStart: Date { merge(date: selectedDate, time: startTime) }
     private var normalizedEnd: Date { merge(date: selectedDate, time: endTime) }
 
     private var canPost: Bool {
+        !isPosting &&
         draft.canPost &&
         !draft.vibe.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         normalizedEnd > normalizedStart
@@ -170,20 +172,32 @@ struct PostDetailsView: View {
                 }
 
                 Button {
+                    guard !isPosting else { return }
+                    isPosting = true
                     Task {
                         draft.startTime = normalizedStart
                         draft.endTime = normalizedEnd
                         await appState.addPost(from: draft)
-                        onPosted()
+                        await MainActor.run {
+                            isPosting = false
+                            onPosted()
+                        }
                     }
                 } label: {
-                    Text("Post")
-                        .font(AppTheme.Typography.label.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, AppTheme.Spacing.md)
-                        .background(canPost ? AppTheme.Colors.primary : AppTheme.Colors.textTertiary)
-                        .cornerRadius(AppTheme.Radius.md)
+                    HStack {
+                        if isPosting {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.9)
+                        }
+                        Text(isPosting ? "Posting..." : "Post")
+                            .font(AppTheme.Typography.label.weight(.semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppTheme.Spacing.md)
+                    .background(canPost ? AppTheme.Colors.primary : AppTheme.Colors.textTertiary)
+                    .cornerRadius(AppTheme.Radius.md)
                 }
                 .disabled(!canPost)
             }

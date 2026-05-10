@@ -68,21 +68,21 @@ struct PostCardView: View {
                 .padding(AppTheme.Spacing.sm)
             }
 
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
                 HStack(spacing: AppTheme.Spacing.sm) {
                     if let pic = authorProfilePic, let url = URL(string: pic) {
                         AsyncImage(url: url) { image in
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 34, height: 34)
-                                .clipShape(Circle())
-                        } placeholder: {
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 34, height: 34)
+                                    .clipShape(Circle())
+                            } placeholder: {
+                                defaultAvatar
+                            }
+                        } else {
                             defaultAvatar
                         }
-                    } else {
-                        defaultAvatar
-                    }
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text(post.hostUsername)
@@ -111,13 +111,21 @@ struct PostCardView: View {
                             .foregroundStyle(AppTheme.Colors.textSecondary)
                     }
 
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock")
-                            .font(.system(size: 11))
-                            .foregroundStyle(AppTheme.Colors.textTertiary)
-                        Text(timeText)
-                            .font(AppTheme.Typography.bodySmall)
-                            .foregroundStyle(AppTheme.Colors.textSecondary)
+                    HStack(spacing: AppTheme.Spacing.sm) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock")
+                                .font(.system(size: 11))
+                                .foregroundStyle(AppTheme.Colors.textTertiary)
+                            Text(timeText)
+                                .font(AppTheme.Typography.bodySmall)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                        }
+                        
+                        if closingSoon {
+                            Text("Closing soon")
+                                .font(AppTheme.Typography.labelSmall.weight(.semibold))
+                                .foregroundStyle(AppTheme.Colors.primary)
+                        }
                     }
 
                     HStack(spacing: 4) {
@@ -130,29 +138,27 @@ struct PostCardView: View {
                     }
                 }
 
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-                    HStack {
-                        Text(post.vibe)
-                            .font(AppTheme.Typography.labelSmall.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, AppTheme.Spacing.sm)
-                            .padding(.vertical, AppTheme.Spacing.xxs)
-                            .background(vibeColor(post.vibe))
-                            .clipShape(Capsule())
-                        Spacer()
-                    }
+                HStack {
+                    Text(post.vibe)
+                        .font(AppTheme.Typography.labelSmall.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, AppTheme.Spacing.sm)
+                        .padding(.vertical, AppTheme.Spacing.xxs)
+                        .background(vibeColor(post.vibe))
+                        .clipShape(Capsule())
+                    Spacer()
+                }
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: AppTheme.Spacing.xs) {
-                            ForEach(post.subjects, id: \.self) { subject in
-                                Text(subject)
-                                    .font(AppTheme.Typography.labelSmall)
-                                    .foregroundStyle(AppTheme.Colors.textSecondary)
-                                    .padding(.horizontal, AppTheme.Spacing.sm)
-                                    .padding(.vertical, AppTheme.Spacing.xxs)
-                                    .background(Color.gray.opacity(0.18))
-                                    .clipShape(Capsule())
-                            }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: AppTheme.Spacing.xs) {
+                        ForEach(post.subjects, id: \.self) { subject in
+                            Text(subject)
+                                .font(AppTheme.Typography.labelSmall)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                                .padding(.horizontal, AppTheme.Spacing.sm)
+                                .padding(.vertical, AppTheme.Spacing.xxs)
+                                .background(Color.gray.opacity(0.18))
+                                .clipShape(Capsule())
                         }
                     }
                 }

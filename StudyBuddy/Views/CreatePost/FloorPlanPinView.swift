@@ -59,34 +59,38 @@ struct FloorPlanCanvas: View {
             Image(draft.floorPlanAssetName)
                 .resizable()
                 .scaledToFit()
+                .overlay {
+                    GeometryReader { imageGeo in
+                        VStack(spacing: 2) {
+                            Text("I'm here")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(AppTheme.Colors.locationText)
+                                .clipShape(Capsule())
 
-            GeometryReader { geo in
-                VStack(spacing: 2) {
-                    Text("I'm here")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(AppTheme.Colors.locationText)
-                        .clipShape(Capsule())
-
-                    Image(systemName: "mappin")
-                        .font(.system(size: 30, weight: .bold))
-                        .foregroundStyle(AppTheme.Colors.locationText)
-                        .scaleEffect(pulse ? 1.12 : 0.96)
-                }
-                .position(
-                    x: draft.pinX * geo.size.width,
-                    y: draft.pinY * geo.size.height
-                )
-                .gesture(
-                    DragGesture()
-                        .onChanged { value in
-                            draft.pinX = min(max(0, value.location.x / geo.size.width), 1)
-                            draft.pinY = min(max(0, value.location.y / geo.size.height), 1)
+                            Image(systemName: "mappin")
+                                .font(.system(size: 30, weight: .bold))
+                                .foregroundStyle(AppTheme.Colors.locationText)
+                                .scaleEffect(pulse ? 1.12 : 0.96)
                         }
-                )
-            }
+                        .position(
+                            x: draft.pinX * imageGeo.size.width,
+                            y: draft.pinY * imageGeo.size.height
+                        )
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    let localX = min(max(value.location.x, 0), imageGeo.size.width)
+                                    let localY = min(max(value.location.y, 0), imageGeo.size.height)
+                                    draft.pinX = localX / max(imageGeo.size.width, 1)
+                                    draft.pinY = localY / max(imageGeo.size.height, 1)
+                                }
+                        )
+                    }
+                }
         }
         .frame(height: 320)
     }

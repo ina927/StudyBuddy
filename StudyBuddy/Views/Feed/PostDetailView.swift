@@ -305,7 +305,7 @@ struct PostDetailView: View {
                 .onDisappear { appState.updatePost(post) }
         }
         .sheet(isPresented: $showFloorMap) {
-            FloorMapPreviewSheet()
+            FloorMapPreviewSheet(post: post)
         }
         .task {
             if let user = await appState.getUser(id: post.hostUserID) {
@@ -327,22 +327,38 @@ struct PostDetailView: View {
 }
 
 private struct FloorMapPreviewSheet: View {
+    let post: StudyPost
+
     var body: some View {
         NavigationStack {
             ZStack {
                 AppTheme.Colors.background.ignoresSafeArea()
 
-                ZStack {
-                    Image("floorplan_sample")
-                        .resizable()
-                        .scaledToFit()
+                Image(post.floorPlanAssetName)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(AppTheme.Spacing.md)
+                    .overlay {
+                        GeometryReader { imageGeo in
+                            VStack(spacing: 2) {
+                                Text("I'm here")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(AppTheme.Colors.locationText)
+                                    .clipShape(Capsule())
 
-                    Image(systemName: "mappin")
-                        .font(.system(size: 30, weight: .bold))
-                        .foregroundStyle(AppTheme.Colors.locationText)
-                        .position(x: 180, y: 180)
-                }
-                .padding(AppTheme.Spacing.md)
+                                Image(systemName: "mappin")
+                                    .font(.system(size: 30, weight: .bold))
+                                    .foregroundStyle(AppTheme.Colors.locationText)
+                            }
+                            .position(
+                                x: min(max(post.pinX, 0), 1) * imageGeo.size.width,
+                                y: min(max(post.pinY, 0), 1) * imageGeo.size.height
+                            )
+                        }
+                    }
             }
             .navigationTitle("Floor map")
             .navigationBarTitleDisplayMode(.inline)
