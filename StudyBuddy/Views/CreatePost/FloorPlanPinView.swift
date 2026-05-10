@@ -126,7 +126,12 @@ struct FloorPlanPinView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
 
                 HStack(spacing: 0) {
-                    FloorSidebar(floors: sameBuildingFloors, selectedFloor: $draft.floor)
+                    FloorSidebar(
+                        floors: sameBuildingFloors,
+                        selectedFloor: $draft.floor,
+                        onFloorChange: updateFloorPlanForSelectedFloor
+                    )
+
                     FloorPlanCanvas(draft: $draft, pulse: pulse)
                 }
                 .frame(height: 320)
@@ -141,13 +146,17 @@ struct FloorPlanPinView: View {
                             .font(AppTheme.Typography.label)
                             .foregroundStyle(AppTheme.Colors.locationText)
                     }
-                    TextField("Describe your location (room number, table area, etc.)", text: $draft.locationDescription, axis: .vertical)
-                        .font(AppTheme.Typography.bodyMedium)
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
-                        .lineLimit(2, reservesSpace: true)
-                        .padding(AppTheme.Spacing.md)
-                        .background(AppTheme.Colors.surface)
-                        .cornerRadius(AppTheme.Radius.lg)
+                    TextField(
+                        "Describe your location (room number, table area, etc.)",
+                        text: $draft.locationDescription,
+                        axis: .vertical
+                    )
+                    .font(AppTheme.Typography.bodyMedium)
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                    .lineLimit(2, reservesSpace: true)
+                    .padding(AppTheme.Spacing.md)
+                    .background(AppTheme.Colors.surface)
+                    .cornerRadius(AppTheme.Radius.lg)
                 }
 
                 LocationPhotoSection(image: $draft.postImage)
@@ -167,10 +176,12 @@ struct FloorPlanPinView: View {
             }
             .padding(AppTheme.Spacing.md)
         }
+        .background(AppTheme.Colors.background)
         .onAppear {
             withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
                 pulse = true
             }
+            updateFloorPlanForSelectedFloor(draft.floor)
         }
     }
 }
