@@ -58,7 +58,7 @@ struct SignUpView: View {
                         AuthInputField(icon: "lock", placeholder: "Password", text: $password, isSecure: true)
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Label("Faculty / Degree", systemImage: "graduationcap")
+                            Label("Degree", systemImage: "graduationcap")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                             MultiSelectDropdown(
