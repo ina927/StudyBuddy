@@ -5,102 +5,138 @@
 //  Created by Ina Song on 4/5/2026.
 //
 
-import PhotosUI
 import SwiftUI
- 
+
+struct FloorButton: View {
+    let floor: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(floor.replacingOccurrences(of: "Level ", with: "L"))
+                .font(AppTheme.Typography.labelSmall)
+                .foregroundStyle(isSelected ? .white : AppTheme.Colors.primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, AppTheme.Spacing.xs)
+                .background(isSelected ? AppTheme.Colors.primary : AppTheme.Colors.primaryPale)
+                .cornerRadius(AppTheme.Radius.sm)
+                .padding(.horizontal, AppTheme.Spacing.xxs)
+        }
+    }
+}
+
+struct FloorSidebar: View {
+    let floors: [String]
+    @Binding var selectedFloor: String
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: AppTheme.Spacing.xs) {
+                ForEach(floors, id: \.self) { floor in
+                    FloorButton(floor: floor, isSelected: selectedFloor == floor) {
+                        selectedFloor = floor
+                    }
+                }
+            }
+            .padding(.vertical, AppTheme.Spacing.sm)
+        }
+        .frame(width: 52)
+        .background(AppTheme.Colors.surface)
+    }
+}
+
+struct FloorPlanCanvas: View {
+    @Binding var draft: CreatePostDraft
+    let pulse: Bool
+
+    var body: some View {
+        ZStack {
+            AppTheme.Colors.primaryPale.opacity(0.4)
+            Image(draft.floorPlanAssetName)
+                .resizable()
+                .scaledToFit()
+            GeometryReader { geo in
+                VStack(spacing: 2) {
+                    Text("I'm here")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(AppTheme.Colors.locationText)
+                        .clipShape(Capsule())
+                    Image(systemName: "mappin")
+                        .font(.system(size: 30, weight: .bold))
+                        .foregroundStyle(AppTheme.Colors.locationText)
+                        .scaleEffect(pulse ? 1.12 : 0.96)
+                }
+                .position(
+                    x: draft.pinX * geo.size.width,
+                    y: draft.pinY * geo.size.height
+                )
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            draft.pinX = min(max(0, value.location.x / geo.size.width), 1)
+                            draft.pinY = min(max(0, value.location.y / geo.size.height), 1)
+                        }
+                )
+            }
+        }
+        .frame(height: 320)
+    }
+}
+
+struct LocationPhotoSection: View {
+    @Binding var image: UIImage?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xxs + 2) {
+            HStack(spacing: 2) {
+                Text("Location Photo")
+                    .font(AppTheme.Typography.label.weight(.semibold))
+                    .foregroundStyle(AppTheme.Colors.primary)
+                Text("*")
+                    .font(AppTheme.Typography.label)
+                    .foregroundStyle(AppTheme.Colors.locationText)
+            }
+            ImagePickerView(selectedImage: $image)
+        }
+    }
+}
+
 struct FloorPlanPinView: View {
     @Binding var draft: CreatePostDraft
     let onNext: () -> Void
-    @State private var photoItem: PhotosPickerItem?
- 
+    @State private var pulse = false
+
     private var sameBuildingFloors: [String] {
         guard let building = MetadataStore.buildings.first(where: { $0.code == draft.buildingCode }) else {
             return ["Level 2", "Level 3", "Level 4", "Level 5"]
         }
         return building.floors.map(\.name)
     }
- 
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
- 
-                // Instruction
-                Text("Move the pin to your exact location.")
+                Text("Drag the pin to your exact position on the floor map.")
                     .font(AppTheme.Typography.bodySmall)
                     .foregroundStyle(AppTheme.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
- 
-                // ── Floor sidebar + map ───────────────────────────────────
+
                 HStack(spacing: 0) {
- 
-                    // Floor sidebar
-                    ScrollView {
-                        VStack(spacing: AppTheme.Spacing.xs) {
-                            ForEach(sameBuildingFloors, id: \.self) { floor in
-                                Button(floor.replacingOccurrences(of: "Level ", with: "L")) {
-                                    draft.floor = floor
-                                    // ── 층 바꿀 때 지도 이미지도 업데이트 ──
-                                    if let building = MetadataStore.buildings.first(where: { $0.code == draft.buildingCode }),
-                                       let floorData = building.floors.first(where: { $0.name == floor }) {
-                                        draft.floorPlanAssetName = floorData.floorPlanAssetName
-                                    }
-                                }
-                                .font(AppTheme.Typography.labelSmall)
-                                .foregroundStyle(
-                                    draft.floor == floor ? .white : AppTheme.Colors.primary
-                                )
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, AppTheme.Spacing.xs)
-                                .background(
-                                    draft.floor == floor
-                                        ? AppTheme.Colors.primary
-                                        : AppTheme.Colors.primaryPale
-                                )
-                                .cornerRadius(AppTheme.Radius.sm)
-                                .padding(.horizontal, AppTheme.Spacing.xxs)
-                            }
-                        }
-                        .padding(.vertical, AppTheme.Spacing.sm)
-                    }
-                    .frame(width: 52)
-                    .background(AppTheme.Colors.inputBg)
- 
-                    // Floor plan map + draggable pin
-                    ZStack {
-                        AppTheme.Colors.primaryPale.opacity(0.4)
- 
-                        Image(draft.floorPlanAssetName)
-                            .resizable()
-                            .scaledToFit()
- 
-                        GeometryReader { geo in
-                            Image(systemName: "mappin.circle.fill")
-                                .font(.title)
-                                .foregroundStyle(AppTheme.Colors.locationText)
-                                .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
-                                .position(
-                                    x: draft.pinX * geo.size.width,
-                                    y: draft.pinY * geo.size.height
-                                )
-                                .gesture(
-                                    DragGesture()
-                                        .onChanged { value in
-                                            draft.pinX = min(max(0, value.location.x / geo.size.width), 1)
-                                            draft.pinY = min(max(0, value.location.y / geo.size.height), 1)
-                                        }
-                                )
-                        }
-                    }
-                    .frame(height: 320)
+                    FloorSidebar(
+                        floors: sameBuildingFloors,
+                        selectedFloor: $draft.floor,
+                        onFloorChange: updateFloorPlanForSelectedFloor
+                    )
+
+                    FloorPlanCanvas(draft: $draft, pulse: pulse)
                 }
                 .frame(height: 320)
                 .cornerRadius(AppTheme.Radius.md)
-                .shadow(color: AppTheme.Shadows.subtle.color,
-                        radius: AppTheme.Shadows.subtle.radius,
-                        x: AppTheme.Shadows.subtle.x,
-                        y: AppTheme.Shadows.subtle.y)
- 
-                // ── Location Description ──────────────────────────────────
+
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xxs + 2) {
                     HStack(spacing: 2) {
                         Text("Location Description")
@@ -119,75 +155,33 @@ struct FloorPlanPinView: View {
                     .foregroundStyle(AppTheme.Colors.textPrimary)
                     .lineLimit(2, reservesSpace: true)
                     .padding(AppTheme.Spacing.md)
-                    .background(AppTheme.Colors.inputBg)
+                    .background(AppTheme.Colors.surface)
                     .cornerRadius(AppTheme.Radius.lg)
                 }
- 
-                // ── Location Photo ────────────────────────────────────────
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.xxs + 2) {
-                    HStack(spacing: 2) {
-                        Text("Location Photo")
-                            .font(AppTheme.Typography.label.weight(.semibold))
-                            .foregroundStyle(AppTheme.Colors.primary)
-                        Text("*")
-                            .font(AppTheme.Typography.label)
-                            .foregroundStyle(AppTheme.Colors.locationText)
-                    }
-                    PhotosPicker(selection: $photoItem, matching: .images) {
-                        HStack(spacing: AppTheme.Spacing.sm) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: AppTheme.Radius.md)
-                                    .fill(AppTheme.Colors.primaryPale)
-                                    .frame(width: 56, height: 56)
-                                Image(systemName: draft.photoAssetName == nil
-                                      ? "camera.fill" : "checkmark.circle.fill")
-                                    .font(.system(size: 22))
-                                    .foregroundStyle(AppTheme.Colors.primary)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(draft.photoAssetName == nil
-                                     ? "Tap to add a photo"
-                                     : "Photo selected ✓")
-                                    .font(AppTheme.Typography.label)
-                                    .foregroundStyle(AppTheme.Colors.primary)
-                                Text(draft.photoAssetName == nil
-                                     ? "Show us where you're sitting"
-                                     : "Tap to change photo")
-                                    .font(AppTheme.Typography.bodySmall)
-                                    .foregroundStyle(AppTheme.Colors.textTertiary)
-                            }
-                            Spacer()
-                        }
-                        .padding(AppTheme.Spacing.sm)
-                        .background(AppTheme.Colors.inputBg)
-                        .cornerRadius(AppTheme.Radius.lg)
-                    }
-                }
- 
-                // ── Next button ───────────────────────────────────────────
-                Button { onNext() } label: {
+
+                LocationPhotoSection(image: $draft.postImage)
+
+                Button {
+                    onNext()
+                } label: {
                     Text("Next")
                         .font(AppTheme.Typography.label.weight(.semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, AppTheme.Spacing.sm)
-                        .background(
-                            draft.canProceedFromLocation
-                                ? AppTheme.Colors.primary
-                                : AppTheme.Colors.textTertiary
-                        )
-                        .cornerRadius(AppTheme.Radius.pill)
+                        .background(draft.canProceedFromLocation ? AppTheme.Colors.primary : AppTheme.Colors.textTertiary)
+                        .cornerRadius(AppTheme.Radius.md)
                 }
                 .disabled(!draft.canProceedFromLocation)
-                .padding(.top, AppTheme.Spacing.xs)
             }
             .padding(AppTheme.Spacing.md)
         }
         .background(AppTheme.Colors.background)
-        .onChange(of: photoItem) {
-            if photoItem != nil {
-                draft.photoAssetName = "room_photo_1"
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                pulse = true
             }
+            updateFloorPlanForSelectedFloor(draft.floor)
         }
     }
 }

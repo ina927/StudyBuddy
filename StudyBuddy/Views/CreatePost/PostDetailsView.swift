@@ -11,311 +11,209 @@ struct PostDetailsView: View {
     @EnvironmentObject private var appState: AppState
     @Binding var draft: CreatePostDraft
     let onPosted: () -> Void
- 
+    let onBackToLocation: () -> Void
+
+    @State private var selectedDate = Calendar.current.startOfDay(for: Date())
+    @State private var startTime = Date()
+    @State private var endTime = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
+
+    private var normalizedStart: Date { merge(date: selectedDate, time: startTime) }
+    private var normalizedEnd: Date { merge(date: selectedDate, time: endTime) }
+
+    private var canPost: Bool {
+        draft.canPost &&
+        !draft.vibe.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        normalizedEnd > normalizedStart
+    }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.lg) {
- 
-                // ── Location (read-only) ──────────────────────────────────
-                PostFormLabel(text: "Location", required: true)
- 
-                HStack(spacing: AppTheme.Spacing.sm) {
-                    Image(systemName: "mappin.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(AppTheme.Colors.locationText)
-                    Text(draft.locationDescription.isEmpty
-                         ? "Click to set location..."
-                         : "\(draft.buildingCode) \(draft.floor) · \(draft.locationDescription)")
+            VStack(spacing: AppTheme.Spacing.md) {
+                // Location button
+                Button {
+                    onBackToLocation()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "mappin.circle")
+                            .font(.system(size: 16))
+                        Text("\(draft.buildingCode) \(draft.floor) · \(draft.locationDescription)")
+                            .font(AppTheme.Typography.bodyMedium)
+                            .lineLimit(1)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundStyle(AppTheme.Colors.primary)
+                    .padding(AppTheme.Spacing.md)
+                    .frame(maxWidth: .infinity)
+                    .background(AppTheme.Colors.surface)
+                    .cornerRadius(AppTheme.Radius.md)
+                }
+                .buttonStyle(.plain)
+
+                fieldBlock(title: "Title", required: true) {
+                    TextField("Post title", text: $draft.title)
                         .font(AppTheme.Typography.bodyMedium)
-                        .foregroundStyle(draft.locationDescription.isEmpty
-                            ? AppTheme.Colors.textTertiary
-                            : AppTheme.Colors.textPrimary)
-                    Spacer()
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                        .padding(AppTheme.Spacing.md)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(AppTheme.Colors.surface)
+                        .cornerRadius(AppTheme.Radius.md)
                 }
-                .padding(AppTheme.Spacing.md)
-                .frame(minHeight: 52)
-                .background(AppTheme.Colors.inputBg)
-                .cornerRadius(AppTheme.Radius.lg)
- 
-                // ── Title ─────────────────────────────────────────────────
-                PostFormLabel(text: "Title", required: true)
- 
-                TextField("Looking for ML study partner!!", text: $draft.title)
-                    .font(AppTheme.Typography.bodyMedium)
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-                    .padding(AppTheme.Spacing.md)
-                    .background(AppTheme.Colors.inputBg)
-                    .cornerRadius(AppTheme.Radius.lg)
- 
-                // ── Description ───────────────────────────────────────────
-                PostFormLabel(text: "Description", required: false)
- 
-                TextField("What are you looking for?",
-                          text: $draft.postBody, axis: .vertical)
-                    .font(AppTheme.Typography.bodyMedium)
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
-                    .lineLimit(5, reservesSpace: true)
-                    .padding(AppTheme.Spacing.md)
-                    .background(AppTheme.Colors.inputBg)
-                    .cornerRadius(AppTheme.Radius.lg)
- 
-                // ── Subject Code ──────────────────────────────────────────
-                PostFormLabel(text: "Subject Code", required: true)
- 
-                SubjectCodeField(selectedSubjects: $draft.subjects)
- 
-                // ── Study Period ──────────────────────────────────────────
-                PostFormLabel(text: "Study Period", required: true)
- 
-                HStack(spacing: AppTheme.Spacing.sm) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Start time")
-                            .font(AppTheme.Typography.labelSmall)
-                            .foregroundStyle(AppTheme.Colors.textTertiary)
-                        DatePicker("", selection: $draft.startTime,
-                                   displayedComponents: .hourAndMinute)
+
+                fieldBlock(title: "Post Body", required: true) {
+                    TextField("Write your post...", text: $draft.postBody, axis: .vertical)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                        .lineLimit(4, reservesSpace: true)
+                        .padding(AppTheme.Spacing.md)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(AppTheme.Colors.surface)
+                        .cornerRadius(AppTheme.Radius.md)
+                }
+
+                fieldBlock(title: "Study Date", required: true) {
+                    HStack {
+                        DatePicker("Study Date", selection: $selectedDate, in: Date()..., displayedComponents: .date)
                             .labelsHidden()
+                            .font(AppTheme.Typography.bodyMedium)
+                        Spacer()
                     }
                     .padding(AppTheme.Spacing.md)
                     .frame(maxWidth: .infinity)
-                    .background(AppTheme.Colors.inputBg)
-                    .cornerRadius(AppTheme.Radius.lg)
- 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("End time")
-                            .font(AppTheme.Typography.labelSmall)
-                            .foregroundStyle(AppTheme.Colors.textTertiary)
-                        DatePicker("", selection: $draft.endTime,
-                                   displayedComponents: .hourAndMinute)
-                            .labelsHidden()
+                    .frame(height: 48)
+                    .background(AppTheme.Colors.surface)
+                    .cornerRadius(AppTheme.Radius.md)
+                }
+
+                fieldBlock(title: "Study Time", required: true) {
+                    HStack(spacing: AppTheme.Spacing.md) {
+                        HStack(spacing: 8) {
+                            Text("Start")
+                                .font(AppTheme.Typography.bodyMedium)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                            DatePicker("", selection: $startTime, displayedComponents: .hourAndMinute)
+                                .labelsHidden()
+                                .font(AppTheme.Typography.bodyMedium)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        HStack(spacing: 8) {
+                            Text("End")
+                                .font(AppTheme.Typography.bodyMedium)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                            DatePicker("", selection: $endTime, displayedComponents: .hourAndMinute)
+                                .labelsHidden()
+                                .font(AppTheme.Typography.bodyMedium)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(AppTheme.Spacing.md)
                     .frame(maxWidth: .infinity)
-                    .background(AppTheme.Colors.inputBg)
-                    .cornerRadius(AppTheme.Radius.lg)
+                    .frame(height: 48)
+                    .background(AppTheme.Colors.surface)
+                    .cornerRadius(AppTheme.Radius.md)
                 }
- 
-                if draft.endTime <= draft.startTime {
-                    Text("End time must be after start time.")
+
+                if normalizedEnd <= normalizedStart {
+                    Text("End time must be later than start time.")
                         .font(AppTheme.Typography.bodySmall)
-                        .foregroundStyle(AppTheme.Colors.locationText)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
- 
-                // ── Vibe ──────────────────────────────────────────────────
-                PostFormLabel(text: "Vibe", required: false)
- 
-                LazyVGrid(
-                    columns: [GridItem(.flexible()), GridItem(.flexible())],
-                    spacing: AppTheme.Spacing.sm
-                ) {
-                    ForEach(MetadataStore.vibes, id: \.self) { vibe in
-                        Button { draft.vibe = vibe } label: {
-                            Text(vibe)
-                                .font(AppTheme.Typography.label)
-                                .foregroundStyle(draft.vibe == vibe
-                                    ? .white
-                                    : AppTheme.Colors.textSecondary)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, AppTheme.Spacing.sm)
-                                .background(draft.vibe == vibe
-                                    ? AppTheme.Colors.primary
-                                    : AppTheme.Colors.inputBg)
-                                .cornerRadius(AppTheme.Radius.lg)
+
+                fieldBlock(title: "Vibe", required: true) {
+                    HStack {
+                        Picker("Vibe", selection: $draft.vibe) {
+                            ForEach(MetadataStore.vibes, id: \.self) {
+                                Text($0)
+                                    .font(AppTheme.Typography.bodyMedium)
+                                    .tag($0)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .font(AppTheme.Typography.bodyMedium)
+                        Spacer()
+                    }
+                    .padding(AppTheme.Spacing.md)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(AppTheme.Colors.surface)
+                    .cornerRadius(AppTheme.Radius.md)
+                }
+
+                fieldBlock(title: "Subject", required: true) {
+                    MultiSelectDropdown(
+                        placeholder: "Search subject",
+                        options: MetadataStore.subjects.map(\.label),
+                        selectedItems: $draft.subjects,
+                        maxSelection: 3
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+
+                fieldBlock(title: "Capacity", required: true) {
+                    Picker("Capacity", selection: $draft.capacity) {
+                        ForEach(1...20, id: \.self) { v in
+                            Text("\(v) people")
+                                .font(AppTheme.Typography.bodyMedium)
+                                .tag(v)
                         }
                     }
+                    .pickerStyle(.wheel)
+                    .font(AppTheme.Typography.bodyMedium)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 120)
+                    .background(AppTheme.Colors.surface)
+                    .cornerRadius(AppTheme.Radius.md)
                 }
- 
-                // ── Capacity ──────────────────────────────────────────────
-                PostFormLabel(text: "Capacity", required: true)
- 
-                HStack {
-                    Button {
-                        if draft.capacity > 1 { draft.capacity -= 1 }
-                    } label: {
-                        Image(systemName: "minus")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(AppTheme.Colors.primary)
-                            .frame(width: 36, height: 36)
-                            .background(AppTheme.Colors.primaryPale)
-                            .cornerRadius(AppTheme.Radius.pill)
-                    }
- 
-                    Spacer()
- 
-                    VStack(spacing: 2) {
-                        Text("\(draft.capacity)")
-                            .font(AppTheme.Typography.heading2)
-                            .foregroundStyle(AppTheme.Colors.textPrimary)
-                        Text("people")
-                            .font(AppTheme.Typography.bodySmall)
-                            .foregroundStyle(AppTheme.Colors.textTertiary)
-                    }
- 
-                    Spacer()
- 
-                    Button {
-                        if draft.capacity < 20 { draft.capacity += 1 }
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(AppTheme.Colors.primary)
-                            .frame(width: 36, height: 36)
-                            .background(AppTheme.Colors.primaryPale)
-                            .cornerRadius(AppTheme.Radius.pill)
-                    }
-                }
-                .padding(AppTheme.Spacing.md)
-                .background(AppTheme.Colors.inputBg)
-                .cornerRadius(AppTheme.Radius.lg)
- 
-                // ── Post button ───────────────────────────────────────────
+
                 Button {
-                    appState.addPost(from: draft)
-                    onPosted()
+                    Task {
+                        draft.startTime = normalizedStart
+                        draft.endTime = normalizedEnd
+                        await appState.addPost(from: draft)
+                        onPosted()
+                    }
                 } label: {
                     Text("Post")
                         .font(AppTheme.Typography.label.weight(.semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, AppTheme.Spacing.sm)
-                        .background(draft.canPost
-                            ? AppTheme.Colors.primary
-                            : AppTheme.Colors.textTertiary)
-                        .cornerRadius(AppTheme.Radius.pill)
+                        .padding(.vertical, AppTheme.Spacing.md)
+                        .background(canPost ? AppTheme.Colors.primary : AppTheme.Colors.textTertiary)
+                        .cornerRadius(AppTheme.Radius.md)
                 }
-                .disabled(!draft.canPost)
-                .padding(.top, AppTheme.Spacing.xs)
+                .disabled(!canPost)
             }
             .padding(AppTheme.Spacing.md)
         }
-        .background(AppTheme.Colors.background)
-    }
-}
- 
-// MARK: - Subject Code Field
-private struct SubjectCodeField: View {
-    @Binding var selectedSubjects: [String]
-    @State private var inputText = ""
-    @State private var isExpanded = false
- 
-    private var filtered: [String] {
-        let opts = MetadataStore.subjects.map(\.label)
-        if inputText.isEmpty { return opts }
-        return opts.filter { $0.localizedCaseInsensitiveContains(inputText) }
-    }
- 
-    var body: some View {
-        VStack(spacing: AppTheme.Spacing.xs) {
- 
-            // Already selected — show with minus button
-            ForEach(selectedSubjects, id: \.self) { subject in
-                HStack {
-                    HStack(spacing: 4) {
-                        Image(systemName: "book.closed")
-                            .font(.system(size: 11))
-                            .foregroundStyle(AppTheme.Colors.tagText)
-                        Text(subject)
-                            .font(AppTheme.Typography.bodyMedium)
-                            .foregroundStyle(AppTheme.Colors.textPrimary)
-                    }
-                    Spacer()
-                    Button {
-                        selectedSubjects.removeAll { $0 == subject }
-                    } label: {
-                        Image(systemName: "minus")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(AppTheme.Colors.textSecondary)
-                            .frame(width: 28, height: 28)
-                            .background(AppTheme.Colors.surface)
-                            .cornerRadius(AppTheme.Radius.pill)
-                    }
-                }
-                .padding(.horizontal, AppTheme.Spacing.md)
-                .padding(.vertical, AppTheme.Spacing.sm)
-                .background(AppTheme.Colors.inputBg)
-                .cornerRadius(AppTheme.Radius.lg)
-            }
- 
-            // Input row with + (max 3)
-            if selectedSubjects.count < 3 {
-                HStack {
-                    TextField("e.g. 123057", text: $inputText)
-                        .font(AppTheme.Typography.bodyMedium)
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
-                        .onTapGesture { isExpanded = true }
-                        .onChange(of: inputText) { isExpanded = true }
- 
-                    Button {
-                        let match = filtered.first(where: {
-                            $0.localizedCaseInsensitiveContains(inputText)
-                        }) ?? (inputText.isEmpty ? nil : inputText)
- 
-                        if let match, !selectedSubjects.contains(match) {
-                            selectedSubjects.append(match)
-                            inputText = ""
-                            isExpanded = false
-                        }
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(AppTheme.Colors.primary)
-                            .frame(width: 28, height: 28)
-                            .background(AppTheme.Colors.primaryPale)
-                            .cornerRadius(AppTheme.Radius.pill)
-                    }
-                }
-                .padding(.horizontal, AppTheme.Spacing.md)
-                .padding(.vertical, AppTheme.Spacing.sm)
-                .background(AppTheme.Colors.inputBg)
-                .cornerRadius(AppTheme.Radius.lg)
- 
-                // Dropdown suggestions
-                if isExpanded && !filtered.isEmpty {
-                    VStack(spacing: 0) {
-                        ForEach(filtered.prefix(5), id: \.self) { option in
-                            Button {
-                                if !selectedSubjects.contains(option) {
-                                    selectedSubjects.append(option)
-                                }
-                                inputText = ""
-                                isExpanded = false
-                            } label: {
-                                HStack {
-                                    Text(option)
-                                        .font(AppTheme.Typography.bodyMedium)
-                                        .foregroundStyle(AppTheme.Colors.textPrimary)
-                                    Spacer()
-                                }
-                                .padding(.horizontal, AppTheme.Spacing.md)
-                                .padding(.vertical, AppTheme.Spacing.sm)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
- 
-                            if option != filtered.prefix(5).last {
-                                Divider()
-                                    .background(AppTheme.Colors.divider)
-                                    .padding(.horizontal, AppTheme.Spacing.md)
-                            }
-                        }
-                    }
-                    .background(AppTheme.Colors.surface)
-                    .cornerRadius(AppTheme.Radius.md)
-                    .shadow(color: AppTheme.Shadows.card.color,
-                            radius: AppTheme.Shadows.card.radius,
-                            x: AppTheme.Shadows.card.x,
-                            y: AppTheme.Shadows.card.y)
-                }
-            }
+        .onAppear {
+            selectedDate = Calendar.current.startOfDay(for: Date())
         }
     }
+
+    private func merge(date: Date, time: Date) -> Date {
+        let cal = Calendar.current
+        let d = cal.dateComponents([.year, .month, .day], from: date)
+        let t = cal.dateComponents([.hour, .minute], from: time)
+        return cal.date(from: DateComponents(year: d.year, month: d.month, day: d.day, hour: t.hour, minute: t.minute)) ?? date
+    }
+
+    private func fieldBlock<Content: View>(title: String, required: Bool, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+            PostFormLabel(text: title, required: required)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 }
- 
-// MARK: - Form label
+
 struct PostFormLabel: View {
     let text: String
     let required: Bool
- 
+
     var body: some View {
         HStack(spacing: 2) {
             Text(text)
@@ -323,10 +221,9 @@ struct PostFormLabel: View {
                 .foregroundStyle(AppTheme.Colors.primary)
             if required {
                 Text("*")
-                    .font(AppTheme.Typography.label)
+                    .font(AppTheme.Typography.label.weight(.semibold))
                     .foregroundStyle(AppTheme.Colors.locationText)
             }
         }
-        .padding(.bottom, -AppTheme.Spacing.xs)
     }
 }

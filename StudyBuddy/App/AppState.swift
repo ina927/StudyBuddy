@@ -1,11 +1,13 @@
 import CoreLocation
 import FirebaseFirestore
 import FirebaseAuth
+import FirebaseStorage
 import FirebaseCore
 import Combine
 
 final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locManager = CLLocationManager()
+    private let imageStorage = Storage.storage()
     private let database = Firestore.firestore()
     
     @Published var isAuthenticated: Bool = false
@@ -14,8 +16,11 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var selectedTab: Int = 0
     @Published var status: String = "Loading"
     @Published var currentLoc: CLLocation?
+    @Published var isLoading = false
         
     func signUp(email: String, password: String, profile: UserProfile) async {
+        await MainActor.run { isLoading = true }
+
         do {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
             let uid = result.user.uid
@@ -44,9 +49,13 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
                 status = "Sign up failed: \(error.localizedDescription)"
             }
         }
+        
+        await MainActor.run { isLoading = false }
     }
     
     func login(email: String, password: String) async {
+        await MainActor.run { isLoading = true }
+
         do {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             let uid = result.user.uid
@@ -63,6 +72,8 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
                 status = "Login failed: \(error.localizedDescription)"
             }
         }
+        
+        await MainActor.run { isLoading = false }
     }
     
     func logout() {
@@ -85,6 +96,19 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
+    func uploadImage(_ image: UIImage, identifier: String, folder:String) async -> String? {
+        guard let imageData = image.jpegData(compressionQuality: 0.7) else { return nil }
+        
+        let ref = Storage.storage().reference().child("\(folder)/\(identifier).jpg")
+        
+        do{
+            let _ = try await ref.putDataAsync(imageData)
+            let url = try await ref.downloadURL()
+            return url.absoluteString
+        } catch {
+            return nil
+        }
+    }
     
     func saveUser(_ user: UserProfile) {
         database.collection("users").document(user.id).setData(user.convertFirestore()) { error in
@@ -119,35 +143,46 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
-    func addPost(from draft: CreatePostDraft) {
+    func addPost(from draft: CreatePostDraft) async {
         guard let user = currentUser else { return }
-        
-        let post = StudyPost(
-            id: UUID().uuidString,
-            hostUserID: user.id,
-            hostUsername: user.username,
-            hostYear: user.year,
-            hostDegrees: user.degrees,
-            hostMajor: user.major,
-            title: draft.title,
-            bodyText: draft.postBody,
-            buildingCode: draft.buildingCode,
-            buildingName: draft.buildingName,
-            floor: draft.floor,
-            locationDescription: draft.locationDescription,
-            photoAssetName: draft.photoAssetName,
-            subjects: draft.subjects,
-            vibe: draft.vibe,
-            capacity: draft.capacity,
-            startTime: draft.startTime,
-            endTime: draft.endTime,
-            createdAt: Date(),
-            statusOverride: nil
-        )
-        
-        posts.insert(post, at: 0)
-        savePost(post)
-        selectedTab = 0
+        let postId = UUID().uuidString
+        Task {
+            
+            var imageURL: String? = nil
+            if let image = draft.postImage {
+                imageURL = await uploadImage(image, identifier: postId, folder: "posts")
+            }
+            
+            let post = StudyPost(
+                id: postId,
+                hostUserID: user.id,
+                hostUsername: user.username,
+                hostYear: user.year,
+                hostDegrees: user.degrees,
+                hostMajor: user.major,
+                title: draft.title,
+                bodyText: draft.postBody,
+                buildingCode: draft.buildingCode,
+                buildingName: draft.buildingName,
+                floor: draft.floor,
+                locationDescription: draft.locationDescription,
+                photoAssetName: imageURL,
+                subjects: draft.subjects,
+                vibe: draft.vibe,
+                capacity: draft.capacity,
+                startTime: draft.startTime,
+                endTime: draft.endTime,
+                createdAt: Date(),
+                statusOverride: nil
+            )
+            
+            await MainActor.run {
+                posts.insert(post, at: 0)
+                selectedTab = 0
+            }
+            savePost(post)
+        }
+
     }
     
     func savePost(_ post: StudyPost) {
@@ -158,6 +193,7 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
                 self.status = "Saved post"
             }
         }
+        print(self.status)
     }
     
     func updatePost(_ post: StudyPost) {
@@ -173,17 +209,6 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
                 self.status = "Failed to delete post: \(error.localizedDescription)"
             }
         }
-    }
-    
-    func detectBuilding(from: CLLocation) -> [BuildingOption]? {
-        var buildingList: [BuildingOption] = []
-        for building in MetadataStore.buildings{
-            let center = CLLocation(latitude: building.lat, longitude: building.long)
-            if center.distance(from: from) <= 100 {
-                buildingList.append(building)
-            }
-        }
-        return buildingList
     }
         
     func start() {

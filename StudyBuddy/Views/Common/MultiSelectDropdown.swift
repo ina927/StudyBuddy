@@ -4,6 +4,7 @@
 //
 //  Created by Ina Song on 4/5/2026.
 //
+
 import SwiftUI
 
 struct MultiSelectDropdown: View {
@@ -13,86 +14,86 @@ struct MultiSelectDropdown: View {
     let maxSelection: Int
 
     @State private var isExpanded = false
-    @State private var inputText = ""
+    @State private var searchText = ""
     @State private var errorText: String?
 
     private var filteredOptions: [String] {
-        if inputText.isEmpty { return options }
-        return options.filter { $0.localizedCaseInsensitiveContains(inputText) }
+        if searchText.isEmpty { return options }
+        return options.filter { $0.localizedCaseInsensitiveContains(searchText) }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                TextField(placeholder, text: $inputText)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .onTapGesture { isExpanded = true }
-                    .onChange(of: inputText) {
-                        isExpanded = true
-                        errorText = nil
-                    }
-
-                Button {
-                    withAnimation { isExpanded.toggle() }
-                } label: {
+            Button {
+                withAnimation { isExpanded.toggle() }
+            } label: {
+                HStack {
+                    Text(placeholder)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                    Spacer()
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.Colors.textTertiary)
                 }
+                .padding(.horizontal, AppTheme.Spacing.md)
+                .padding(.vertical, AppTheme.Spacing.sm)
+                .background(AppTheme.Colors.surface)
+                .cornerRadius(AppTheme.Radius.md)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .buttonStyle(.plain)
 
             if isExpanded {
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(filteredOptions.prefix(8), id: \.self) { option in
-                            Button {
-                                guard selectedItems.count < maxSelection else {
-                                    errorText = "Up to \(maxSelection) items."
-                                    return
-                                }
+                VStack(spacing: 8) {
+                    TextField("Search...", text: $searchText)
+                        .padding(.horizontal, AppTheme.Spacing.md)
+                        .padding(.vertical, AppTheme.Spacing.sm)
+                        .background(AppTheme.Colors.surface)
+                        .cornerRadius(AppTheme.Radius.md)
 
-                                if !selectedItems.contains(option) {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(filteredOptions.prefix(12), id: \.self) { option in
+                                Button {
+                                    if selectedItems.contains(option) {
+                                        errorText = "Already selected."
+                                        return
+                                    }
+                                    if selectedItems.count >= maxSelection {
+                                        errorText = "Up to \(maxSelection) items."
+                                        return
+                                    }
                                     selectedItems.append(option)
-                                } else {
-                                    errorText = "Already selected."
-                                    return
+                                    errorText = nil
+                                } label: {
+                                    HStack {
+                                        Text(option)
+                                            .font(AppTheme.Typography.bodyMedium)
+                                            .foregroundStyle(AppTheme.Colors.textPrimary)
+                                        Spacer()
+                                        if selectedItems.contains(option) {
+                                            Image(systemName: "checkmark")
+                                                .foregroundStyle(AppTheme.Colors.primary)
+                                        }
+                                    }
+                                    .padding(.horizontal, AppTheme.Spacing.md)
+                                    .padding(.vertical, AppTheme.Spacing.sm)
                                 }
+                                .buttonStyle(.plain)
 
-                                inputText = ""
-                                isExpanded = false
-                                errorText = nil
-                            } label: {
-                                HStack {
-                                    Text(option)
-                                    Spacer()
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 10)
-                                .contentShape(Rectangle())
+                                Divider()
+                                    .background(AppTheme.Colors.divider)
                             }
-                            .buttonStyle(.plain)
-
-                            Divider()
                         }
                     }
+                    .frame(maxHeight: 220)
+                    .background(AppTheme.Colors.surface)
+                    .cornerRadius(AppTheme.Radius.md)
                 }
-                .frame(maxHeight: 220)
-                .background(Color(.systemBackground))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color(.separator), lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
             }
 
             if let errorText {
                 Text(errorText)
-                    .font(.caption)
+                    .font(AppTheme.Typography.bodySmall)
                     .foregroundStyle(.red)
             }
 
@@ -101,19 +102,21 @@ struct MultiSelectDropdown: View {
                     ForEach(selectedItems, id: \.self) { item in
                         HStack {
                             Text(item)
-                                .font(.subheadline)
+                                .font(AppTheme.Typography.bodySmall)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
                             Spacer()
                             Button {
                                 selectedItems.removeAll { $0 == item }
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(AppTheme.Colors.primary)
                             }
                             .buttonStyle(.plain)
                         }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .padding(.horizontal, AppTheme.Spacing.sm)
+                        .padding(.vertical, 6)
+                        .background(Color.gray.opacity(0.12))
+                        .cornerRadius(AppTheme.Radius.sm)
                     }
                 }
             }

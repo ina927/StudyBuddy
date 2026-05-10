@@ -162,27 +162,25 @@ struct MetadataStore {
     // MARK: - Vibes
     static let vibes: [String] = [
         "Silent Focus",
-        "Light Discussion",
+        "Casual Co-study",
         "Problem Solving",
         "Exam Sprint",
+        "Assignment Sprint",
         "Peer Teaching",
-        "Group Project",
-        "Tutoring"
+        "Discussion Heavy",
     ]
  
     // MARK: - Floor plan asset names (from Assets.xcassets)
-    // Available: "Buidling 2 level 6", "Building 2 level 4", "Building 2 level 5",
-    //            "Building 2 level 7", "Building 2 level 8", "Building 2 level 10"
     private static let floorPlanAssets: [String: String] = [
-        "Level 1":  "floorplan_sample",
-        "Level 2":  "floorplan_sample",
-        "Level 3":  "floorplan_sample",
+        "Level 1":  "Building 2 level 5",
+        "Level 2":  "Building 2 level 6",
+        "Level 3":  "Building 2 level 7",
         "Level 4":  "Building 2 level 4",
         "Level 5":  "Building 2 level 5",
         "Level 6":  "Building 2 level 6",
         "Level 7":  "Building 2 level 7",
         "Level 8":  "Building 2 level 8",
-        "Level 9":  "floorplan_sample",
+        "Level 9":  "Building 2 level 6",
         "Level 10": "Building 2 level 10",
     ]
  
