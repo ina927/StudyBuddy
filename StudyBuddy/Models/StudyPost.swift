@@ -30,6 +30,9 @@ struct StudyPost: Identifiable, Codable, Equatable {
     var buildingCode: String
     var buildingName: String
     var floor: String
+    var floorPlanAssetName: String
+    var pinX: Double
+    var pinY: Double
     var locationDescription: String
     var photoAssetName: String?
 
@@ -64,6 +67,9 @@ struct StudyPost: Identifiable, Codable, Equatable {
             "buildingCode": buildingCode,
             "buildingName": buildingName,
             "floor": floor,
+            "floorPlanAssetName": floorPlanAssetName,
+            "pinX": pinX,
+            "pinY": pinY,
             "locationDescription": locationDescription,
             "photoAssetName": photoAssetName ?? "",
             "subjects": subjects,
@@ -95,6 +101,21 @@ struct StudyPost: Identifiable, Codable, Equatable {
               let createdAt = (data["createdAt"] as? Timestamp)?.dateValue()
         else { return nil }
 
+        let fallbackFloorPlanAssetName: String = {
+            guard
+                let building = MetadataStore.buildings.first(where: { $0.code == buildingCode }),
+                let floorData = building.floors.first(where: { $0.name == floor })
+            else { return "Building 2 level 6" }
+            return floorData.floorPlanAssetName
+        }()
+
+        let parsedFloorPlanAssetName = ((data["floorPlanAssetName"] as? String)?.isEmpty == false)
+            ? (data["floorPlanAssetName"] as? String ?? fallbackFloorPlanAssetName)
+            : fallbackFloorPlanAssetName
+
+        let parsedPinX = data["pinX"] as? Double ?? 0.5
+        let parsedPinY = data["pinY"] as? Double ?? 0.5
+
         return StudyPost(
             id: id,
             hostUserID: hostUserID,
@@ -107,6 +128,9 @@ struct StudyPost: Identifiable, Codable, Equatable {
             buildingCode: buildingCode,
             buildingName: buildingName,
             floor: floor,
+            floorPlanAssetName: parsedFloorPlanAssetName,
+            pinX: parsedPinX,
+            pinY: parsedPinY,
             locationDescription: locationDescription,
             photoAssetName: data["photoAssetName"] as? String,
             subjects: subjects,
