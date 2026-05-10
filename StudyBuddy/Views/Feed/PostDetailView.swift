@@ -12,11 +12,13 @@ struct PostDetailView: View {
     @State var post: StudyPost
     @State private var showEdit = false
     @State private var showFloorMap = false
+    @Environment(\.dismiss) private var dismiss
 
     @State private var authorProfilePic: String? = nil
 
     @State private var showFullConfirm = false
     @State private var showEndConfirm = false
+    @State private var showDeleteConfirm = false
 
     private var isHost: Bool {
         appState.currentUser?.id == post.hostUserID
@@ -276,7 +278,7 @@ struct PostDetailView: View {
                     Menu {
                         Button("Edit") { showEdit = true }
                         Button("Delete", role: .destructive) {
-                            appState.deletePost(post)
+                            showDeleteConfirm = true
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -300,6 +302,15 @@ struct PostDetailView: View {
             }
         } message: {
             Text("This cannot be undone. The session will remain finished.")
+        }
+        .alert("Delete this post?", isPresented: $showDeleteConfirm) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                appState.deletePost(post)
+                dismiss()
+            }
+        } message: {
+            Text("This action cannot be undone.")
         }
         .sheet(isPresented: $showEdit) {
             EditPostView(post: $post)
