@@ -9,57 +9,65 @@ import SwiftUI
 import CoreLocation
 
 struct CreatePostRootView: View {
-    @EnvironmentObject var appState: AppState
+    @EnvironmentObject private var appState: AppState
 
     @State private var draft = CreatePostDraft()
     @State private var step = 1
+    private let totalSteps = 3
+
     @State private var postedDraft: CreatePostDraft? = nil
-    @State private var detectedBuildings: [BuildingOption] = []
-    @State private var showBuildingDetection = false
+
     @State private var showNearestBuildingPopup = false
     @State private var nearestBuilding: BuildingOption?
     @State private var shouldAutoExpandBuildingId: String?
-    private let totalSteps = 3
 
     var body: some View {
         NavigationStack {
-            if let done = postedDraft {
-                PostSuccessView(draft: done) {
-                    postedDraft = nil
-                    draft = CreatePostDraft()
-                    withAnimation { step = 1 }
-                    appState.selectedTab = 0
-                }
-            } else {
-                ZStack {
-                    AppTheme.Colors.background.ignoresSafeArea()
+            ZStack {
+                AppTheme.Colors.background.ignoresSafeArea()
 
-                    Group {
-                        if step == 1 {
-                            BuildingDirectoryView(
-                                autoExpandBuildingID: shouldAutoExpandBuildingId
-                            ) { code, name, floor, asset in
-                                draft.buildingCode = code
-                                draft.buildingName = name
-                                draft.floor = floor
-                                draft.floorPlanAssetName = asset
-                                withAnimation { step = 2 }
+                Group {
+                    if let posted = postedDraft {
+                        PostSuccessfulView(
+                            postedDraft: posted,
+                            onGoFeed: {
+                                appState.selectedTab = 0
+                                resetDraftFlow()
+                            },
+                            onCreateAnother: {
+                                resetDraftFlow()
                             }
-                        } else if step == 2 {
-                            FloorPlanPinView(draft: $draft) {
-                                withAnimation { step = 3 }
-                            }
-                        } else {
-                            PostDetailsView(draft: $draft) {
-                                postedDraft = draft
-                            } onBackToLocation: {
-                                withAnimation { step = 2 }
-                            }
+                        )
+                    } else if step == 1 {
+                        BuildingDirectoryView(
+                            autoExpandBuildingID: shouldAutoExpandBuildingId
+                        ) { code, name, floor, asset in
+                            draft.buildingCode = code
+                            draft.buildingName = name
+                            draft.floor = floor
+                            draft.floorPlanAssetName = asset
+                            withAnimation { step = 2 }
                         }
+                    } else if step == 2 {
+                        FloorPlanPinView(draft: $draft) {
+                            withAnimation { step = 3 }
+                        }
+                    } else {
+                        PostDetailsView(
+                            draft: $draft,
+                            onPosted: {
+                                postedDraft = draft
+                            },
+                            onBackToLocation: {
+                                withAnimation { step = 2 }
+                            }
+                        )
                     }
-                    .background(AppTheme.Colors.background)
                 }
-                .safeAreaInset(edge: .top) {
+                .background(AppTheme.Colors.background)
+            }
+            .safeAreaInset(edge: .top) {
+                if postedDraft == nil {
                     VStack(spacing: AppTheme.Spacing.xs) {
                         HStack {
                             if step > 1 {
@@ -91,6 +99,7 @@ struct CreatePostRootView: View {
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(AppTheme.Colors.primaryPale)
                                 .frame(height: 4)
+
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(AppTheme.Colors.primary)
                                 .frame(height: 4)
@@ -106,37 +115,29 @@ struct CreatePostRootView: View {
                     }
                     .background(AppTheme.Colors.headerBackground)
                 }
-                .navigationBarHidden(true)
-                .confirmationDialog("Are you in one of these buildings?", isPresented: $showBuildingDetection, titleVisibility: .visible) {
-                    ForEach(detectedBuildings) { building in
-                        Button(building.label) {
-                            draft.buildingCode = building.code
-                            draft.buildingName = building.name
-                            shouldAutoExpandBuildingId = building.id
-                            withAnimation { step = 2 }
-                        }
-                    }
-                    Button("None of these", role: .cancel) { }
+            }
+            .navigationBarHidden(true)
+            .onAppear {
+                appState.start()
+                if step == 1 && postedDraft == nil {
+                    showNearestBuildingSuggestion()
                 }
-                .alert("Nearby Building Found", isPresented: $showNearestBuildingPopup) {
-                    if let b = nearestBuilding {
-                        Button("Select \(b.code)") {
-                            shouldAutoExpandBuildingId = b.id
-                        }
-                    }
-                    Button("No, choose another building", role: .cancel) {}
-                } message: {
-                    if let b = nearestBuilding {
-                        Text("The nearest building to your current location is \(b.name) (\(b.code)).")
-                    } else {
-                        Text("Please choose your building manually.")
+            }
+            .alert(
+                "Nearby Building Found",
+                isPresented: $showNearestBuildingPopup
+            ) {
+                if let b = nearestBuilding {
+                    Button("Select \(b.code)") {
+                        shouldAutoExpandBuildingId = b.id
                     }
                 }
-                .onAppear {
-                    appState.start()
-                    if step == 1 {
-                        showNearestBuildingSuggestion()
-                    }
+                Button("No, choose another building", role: .cancel) {}
+            } message: {
+                if let b = nearestBuilding {
+                    Text("The nearest building to your current location is \(b.name) (\(b.code)).")
+                } else {
+                    Text("Please choose your building manually.")
                 }
             }
         }
@@ -152,15 +153,73 @@ struct CreatePostRootView: View {
 
     private func showNearestBuildingSuggestion() {
         guard let loc = appState.currentLoc else { return }
+
         let candidates = MetadataStore.buildings
             .map { b -> (BuildingOption, CLLocationDistance) in
                 let center = CLLocation(latitude: b.lat, longitude: b.long)
                 return (b, center.distance(from: loc))
             }
-            .sorted { $0.1 < $1.1 }
+            .sorted(by: { $0.1 < $1.1 })
 
         guard let nearest = candidates.first?.0 else { return }
         nearestBuilding = nearest
         showNearestBuildingPopup = true
+    }
+
+    private func resetDraftFlow() {
+        draft = CreatePostDraft()
+        postedDraft = nil
+        shouldAutoExpandBuildingId = nil
+        withAnimation { step = 1 }
+    }
+}
+
+private struct PostSuccessfulView: View {
+    let postedDraft: CreatePostDraft
+    let onGoFeed: () -> Void
+    let onCreateAnother: () -> Void
+
+    var body: some View {
+        VStack(spacing: AppTheme.Spacing.lg) {
+            Spacer()
+
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(AppTheme.Colors.primary)
+
+            Text("Post Successful")
+                .font(AppTheme.Typography.heading1)
+                .foregroundStyle(AppTheme.Colors.textPrimary)
+
+            Text("\(postedDraft.buildingCode) \(postedDraft.floor)")
+                .font(AppTheme.Typography.bodySmall)
+                .foregroundStyle(AppTheme.Colors.textSecondary)
+
+            VStack(spacing: AppTheme.Spacing.sm) {
+                Button(action: onGoFeed) {
+                    Text("Go to Feed")
+                        .font(AppTheme.Typography.label.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppTheme.Spacing.sm)
+                        .background(AppTheme.Colors.primary)
+                        .cornerRadius(AppTheme.Radius.md)
+                }
+
+                Button(action: onCreateAnother) {
+                    Text("Create Another Post")
+                        .font(AppTheme.Typography.label.weight(.semibold))
+                        .foregroundStyle(AppTheme.Colors.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppTheme.Spacing.sm)
+                        .background(AppTheme.Colors.surface)
+                        .cornerRadius(AppTheme.Radius.md)
+                }
+            }
+            .padding(.horizontal, AppTheme.Spacing.xl)
+
+            Spacer()
+        }
+        .padding(AppTheme.Spacing.md)
     }
 }
