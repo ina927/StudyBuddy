@@ -121,14 +121,30 @@ struct PostDetailView: View {
                             .font(AppTheme.Typography.postTitle)
                             .foregroundStyle(AppTheme.Colors.textPrimary)
 
-                        Text(dateText)
-                            .font(AppTheme.Typography.bodySmall)
+                        Text(post.bodyText)
+                            .font(AppTheme.Typography.bodyMedium)
                             .foregroundStyle(AppTheme.Colors.textSecondary)
 
+                        Divider().background(AppTheme.Colors.divider)
+
+                        HStack(spacing: 4) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 11))
+                                .foregroundStyle(AppTheme.Colors.textTertiary)
+                            Text(dateText)
+                                .font(AppTheme.Typography.bodySmall)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                        }
+
                         HStack(spacing: AppTheme.Spacing.sm) {
-                            Text(timeText)
-                                .font(AppTheme.Typography.label.weight(.semibold))
-                                .foregroundStyle(.black)
+                            HStack(spacing: 4) {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(AppTheme.Colors.textTertiary)
+                                Text(timeText)
+                                    .font(AppTheme.Typography.label.weight(.semibold))
+                                    .foregroundStyle(.black)
+                            }
                             if closingSoon {
                                 Text("Closing soon")
                                     .font(AppTheme.Typography.labelSmall.weight(.semibold))
@@ -180,10 +196,6 @@ struct PostDetailView: View {
                                 .font(AppTheme.Typography.bodySmall)
                                 .foregroundStyle(AppTheme.Colors.textSecondary)
                         }
-
-                        Text(post.bodyText)
-                            .font(AppTheme.Typography.bodyMedium)
-                            .foregroundStyle(AppTheme.Colors.textSecondary)
 
                         Button {
                             showFloorMap = true
