@@ -11,7 +11,6 @@ struct MyPostCard: View {
     @EnvironmentObject private var appState: AppState
     @Binding var post: StudyPost
     var isPast: Bool = false
-    @State private var showingEdit = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -22,9 +21,6 @@ struct MyPostCard: View {
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .shadow(color: .black.opacity(0.07), radius: 4, x: 0, y: 2)
-        .sheet(isPresented: $showingEdit) {
-            EditPostView(post: $post)
-        }
     }
 
     private var imagePlaceholder: some View {
@@ -65,13 +61,7 @@ struct MyPostCard: View {
                     .font(.caption)
                     .foregroundStyle(Color.secondary)
 
-                HStack {
-                    PostStatusBadge(status: post.computedStatus)
-                    Spacer()
-                    Button("Edit") { showingEdit = true }
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(AppTheme.Colors.primary)
-                }
+                PostStatusBadge(status: post.computedStatus)
             }
         }
         .padding(12)

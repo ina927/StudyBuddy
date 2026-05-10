@@ -192,15 +192,16 @@ struct PostCardView: View {
 
     private func vibeColor(_ vibe: String) -> Color {
         switch vibe {
-        case "Silent Focus": return Color(red: 109/255, green: 95/255, blue: 171/255)
-        case "Casual Co-study": return Color(red: 93/255, green: 137/255, blue: 168/255)
-        case "Problem Solving": return Color(red: 122/255, green: 120/255, blue: 186/255)
-        case "Exam Revision": return Color(red: 148/255, green: 99/255, blue: 168/255)
-        case "Assignment Sprint": return Color(red: 135/255, green: 96/255, blue: 146/255)
-        case "Peer Teaching": return Color(red: 90/255, green: 132/255, blue: 145/255)
-        case "Discussion Heavy": return Color(red: 132/255, green: 110/255, blue: 170/255)
-        case "Accountability Session": return Color(red: 99/255, green: 114/255, blue: 168/255)
-        default: return AppTheme.Colors.primary
+        case "Silent Focus": return Color(red: 90/255, green: 145/255, blue: 175/255) // 차분한 슬레이트 블루
+        case "Casual Co-study": return Color(red: 220/255, green: 160/255, blue: 115/255) // 부드러운 테라코타
+        case "Problem Solving": return Color(red: 210/255, green: 130/255, blue: 100/255) // 따뜻한 코랄
+        case "Exam Revision": return Color(red: 210/255, green: 115/255, blue: 140/255) // 부드러운 로즈
+        case "Exam Sprint": return Color(red: 210/255, green: 115/255, blue: 140/255) // 부드러운 로즈
+        case "Assignment Sprint": return Color(red: 195/255, green: 140/255, blue: 95/255) // 골든 샌드
+        case "Peer Teaching": return Color(red: 95/255, green: 160/255, blue: 160/255) // 티ール
+        case "Discussion Heavy": return Color(red: 185/255, green: 155/255, blue: 120/255) // 머스타드 베이지
+        case "Accountability Session": return Color(red: 215/255, green: 140/255, blue: 125/255) // 소프트 코랄
+        default: return Color(red: 140/255, green: 150/255, blue: 165/255) // 중간 회색
         }
     }
 }
