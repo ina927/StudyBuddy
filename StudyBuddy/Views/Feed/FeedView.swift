@@ -16,6 +16,7 @@ struct FeedView: View {
     @State private var selectedStatuses: Set<StudyPost.Status> = [.ongoing, .notStarted]
     @State private var selectedDegrees: [String] = []
     @State private var selectedSubjects: [String] = []
+    @State private var selectedVibes: [String] = []
     @State private var selectedBuildings: Set<String> = []
 
     @State private var showAllBuildings = true
@@ -36,8 +37,10 @@ struct FeedView: View {
     private var activeFilterTokens: [FilterToken] {
         var tokens: [FilterToken] = []
 
-        for s in selectedStatuses.sorted(by: { $0.rawValue < $1.rawValue }) {
-            tokens.append(.init(label: s.rawValue, type: .status(s)))
+        if selectedStatuses.count < StudyPost.Status.allCases.count {
+            for s in selectedStatuses.sorted(by: { $0.rawValue < $1.rawValue }) {
+                tokens.append(.init(label: s.rawValue, type: .status(s)))
+            }
         }
 
         for d in selectedDegrees {
@@ -46,6 +49,10 @@ struct FeedView: View {
 
         for s in selectedSubjects {
             tokens.append(.init(label: s, type: .subject(s)))
+        }
+
+        for v in selectedVibes {
+            tokens.append(.init(label: v, type: .vibe(v)))
         }
 
         if !showAllBuildings {
@@ -63,9 +70,10 @@ struct FeedView: View {
 
     private var filtered: [StudyPost] {
         appState.posts.filter { post in
-            let statusPass = selectedStatuses.contains(post.computedStatus)
+            let statusPass = selectedStatuses.isEmpty || selectedStatuses.contains(post.computedStatus)
             let degreePass = selectedDegrees.isEmpty || !Set(post.hostDegrees).isDisjoint(with: Set(selectedDegrees))
             let subjectPass = selectedSubjects.isEmpty || !Set(post.subjects).isDisjoint(with: Set(selectedSubjects))
+            let vibePass = selectedVibes.isEmpty || selectedVibes.contains(post.vibe)
             let buildingPass = showAllBuildings || selectedBuildings.contains(post.buildingCode)
             let timePass = showAllTime || (post.startTime <= toDate && post.endTime >= fromDate)
 
@@ -76,7 +84,7 @@ struct FeedView: View {
                 || post.hostUsername.lowercased().contains(q)
                 || post.subjects.joined(separator: " ").lowercased().contains(q)
 
-            return statusPass && degreePass && subjectPass && buildingPass && timePass && queryPass
+            return statusPass && degreePass && subjectPass && vibePass && buildingPass && timePass && queryPass
         }
         .sorted { $0.createdAt > $1.createdAt }
     }
@@ -196,6 +204,7 @@ struct FeedView: View {
                     selectedStatuses: $selectedStatuses,
                     selectedDegrees: $selectedDegrees,
                     selectedSubjects: $selectedSubjects,
+                    selectedVibes: $selectedVibes,
                     selectedBuildings: $selectedBuildings,
                     showAllBuildings: $showAllBuildings,
                     showAllTime: $showAllTime,
@@ -205,11 +214,6 @@ struct FeedView: View {
                 )
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
-                .onAppear {
-                    if selectedDegrees.isEmpty, let user = appState.currentUser, !user.degrees.isEmpty {
-                        selectedDegrees = user.degrees
-                    }
-                }
             }
         }
     }
@@ -218,10 +222,15 @@ struct FeedView: View {
         switch token.type {
         case .status(let s):
             selectedStatuses.remove(s)
+            if selectedStatuses.isEmpty {
+                selectedStatuses = Set(StudyPost.Status.allCases)
+            }
         case .degree(let d):
             selectedDegrees.removeAll { $0 == d }
         case .subject(let s):
             selectedSubjects.removeAll { $0 == s }
+        case .vibe(let v):
+            selectedVibes.removeAll { $0 == v }
         case .building(let b):
             selectedBuildings.remove(b)
         case .date:
@@ -238,6 +247,7 @@ private struct FilterToken: Identifiable {
         case status(StudyPost.Status)
         case degree(String)
         case subject(String)
+        case vibe(String)
         case building(String)
         case date
     }
@@ -253,6 +263,7 @@ struct FilterSheetView: View {
     @Binding var selectedStatuses: Set<StudyPost.Status>
     @Binding var selectedDegrees: [String]
     @Binding var selectedSubjects: [String]
+    @Binding var selectedVibes: [String]
     @Binding var selectedBuildings: Set<String>
     @Binding var showAllBuildings: Bool
     @Binding var showAllTime: Bool
@@ -285,11 +296,9 @@ struct FilterSheetView: View {
                             MultiSelectDropdown(
                                 placeholder: "Search vibe",
                                 options: MetadataStore.vibes,
-                                selectedItems: .constant([]),
-                                maxSelection: 1
+                                selectedItems: $selectedVibes,
+                                maxSelection: 10
                             )
-                            .opacity(0.6)
-                            .allowsHitTesting(false)
                         }
 
                         FilterSection(title: "Study area") {
@@ -378,6 +387,8 @@ struct FilterSheetView: View {
                                     showAllTime = false
                                 }
                             ), displayedComponents: .date)
+                            .disabled(showAllTime)
+                            .opacity(showAllTime ? 0.5 : 1.0)
 
                             TimeRangeSlider(
                                 fromMinute: Binding(
@@ -395,6 +406,8 @@ struct FilterSheetView: View {
                                     }
                                 )
                             )
+                            .disabled(showAllTime)
+                            .opacity(showAllTime ? 0.5 : 1.0)
                         }
                     }
                     .padding(AppTheme.Spacing.md)
@@ -408,6 +421,7 @@ struct FilterSheetView: View {
                         selectedStatuses = [.ongoing, .notStarted]
                         selectedDegrees = []
                         selectedSubjects = []
+                        selectedVibes = []
                         selectedBuildings = []
                         buildingTemp = []
                         showAllBuildings = true

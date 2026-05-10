@@ -24,71 +24,68 @@ struct MultiSelectDropdown: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Button {
-                withAnimation { isExpanded.toggle() }
-            } label: {
-                HStack {
-                    Text(placeholder)
-                        .font(AppTheme.Typography.bodyMedium)
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
-                    Spacer()
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .foregroundStyle(AppTheme.Colors.textTertiary)
-                }
-                .padding(.horizontal, AppTheme.Spacing.md)
-                .padding(.vertical, AppTheme.Spacing.sm)
-                .background(AppTheme.Colors.surface)
-                .cornerRadius(AppTheme.Radius.md)
+            HStack {
+                TextField(placeholder, text: $searchText)
+                    .font(AppTheme.Typography.bodyMedium)
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                
+                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                    .foregroundStyle(AppTheme.Colors.textTertiary)
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, AppTheme.Spacing.md)
+            .padding(.vertical, AppTheme.Spacing.sm)
+            .background(AppTheme.Colors.surface)
+            .cornerRadius(AppTheme.Radius.md)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if !isExpanded {
+                    withAnimation { isExpanded = true }
+                }
+            }
 
             if isExpanded {
-                VStack(spacing: 8) {
-                    TextField("Search...", text: $searchText)
-                        .padding(.horizontal, AppTheme.Spacing.md)
-                        .padding(.vertical, AppTheme.Spacing.sm)
-                        .background(AppTheme.Colors.surface)
-                        .cornerRadius(AppTheme.Radius.md)
-
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            ForEach(filteredOptions.prefix(12), id: \.self) { option in
-                                Button {
-                                    if selectedItems.contains(option) {
-                                        errorText = "Already selected."
-                                        return
-                                    }
-                                    if selectedItems.count >= maxSelection {
-                                        errorText = "Up to \(maxSelection) items."
-                                        return
-                                    }
-                                    selectedItems.append(option)
-                                    errorText = nil
-                                } label: {
-                                    HStack {
-                                        Text(option)
-                                            .font(AppTheme.Typography.bodyMedium)
-                                            .foregroundStyle(AppTheme.Colors.textPrimary)
-                                        Spacer()
-                                        if selectedItems.contains(option) {
-                                            Image(systemName: "checkmark")
-                                                .foregroundStyle(AppTheme.Colors.primary)
-                                        }
-                                    }
-                                    .padding(.horizontal, AppTheme.Spacing.md)
-                                    .padding(.vertical, AppTheme.Spacing.sm)
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(filteredOptions.prefix(12), id: \.self) { option in
+                            Button {
+                                if selectedItems.contains(option) {
+                                    errorText = "Already selected."
+                                    withAnimation { isExpanded = false }
+                                    return
                                 }
-                                .buttonStyle(.plain)
-
-                                Divider()
-                                    .background(AppTheme.Colors.divider)
+                                if selectedItems.count >= maxSelection {
+                                    errorText = "Up to \(maxSelection) items."
+                                    withAnimation { isExpanded = false }
+                                    return
+                                }
+                                selectedItems.append(option)
+                                errorText = nil
+                                searchText = ""
+                                withAnimation { isExpanded = false }
+                            } label: {
+                                HStack {
+                                    Text(option)
+                                        .font(AppTheme.Typography.bodyMedium)
+                                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                                    Spacer()
+                                    if selectedItems.contains(option) {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(AppTheme.Colors.primary)
+                                    }
+                                }
+                                .padding(.horizontal, AppTheme.Spacing.md)
+                                .padding(.vertical, AppTheme.Spacing.sm)
                             }
+                            .buttonStyle(.plain)
+
+                            Divider()
+                                .background(AppTheme.Colors.divider)
                         }
                     }
-                    .frame(maxHeight: 220)
-                    .background(AppTheme.Colors.surface)
-                    .cornerRadius(AppTheme.Radius.md)
                 }
+                .frame(maxHeight: 220)
+                .background(AppTheme.Colors.surface)
+                .cornerRadius(AppTheme.Radius.md)
             }
 
             if let errorText {
