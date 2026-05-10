@@ -60,7 +60,7 @@ struct MetadataStore {
  
     // MARK: - Subjects
     static let subjects: [SubjectOption] = [
-        .init(id: "any",    code: "ANY",    name: "Any subject"),
+        .init(id: "any",    code: "Any",    name: "Subject"),
  
         // IT
         .init(id: "31005",  code: "31005",  name: "Machine Learning"),
@@ -186,37 +186,37 @@ struct MetadataStore {
  
     // MARK: - Buildings
     static let buildings: [BuildingOption] = [
-        .init(id: "cb01", code: "CB01", name: "Tower Building",
+        .init(id: "cb01", code: "CB01", name: "Buiding 1 (UTS Tower)",
               floors: floors(cb: "CB01", levels: ["Level 2","Level 3","Level 4","Level 5","Level 6","Level 7"]),
               lat: -33.8836, long: 151.2009),
-        .init(id: "cb02", code: "CB02", name: "UTS Central",
+        .init(id: "cb02", code: "CB02", name: "Building 2 (Library)",
               floors: floors(cb: "CB02", levels: ["Level 4","Level 5","Level 6","Level 7","Level 8","Level 10"]),
               lat: -33.8837, long: 151.2002),
-        .init(id: "cb03", code: "CB03", name: "Bon Marche Building",
+        .init(id: "cb03", code: "CB03", name: "Building 3",
               floors: floors(cb: "CB03", levels: ["Level 1","Level 2","Level 3","Level 4","Level 5"]),
               lat: -33.8837, long: 151.2017),
-        .init(id: "cb04", code: "CB04", name: "Science Building",
+        .init(id: "cb04", code: "CB04", name: "Building 4",
               floors: floors(cb: "CB04", levels: ["Level 1","Level 2","Level 3","Level 4"]),
               lat: -33.8830, long: 151.2012),
-        .init(id: "cb05", code: "CB05", name: "Haymarket Building",
+        .init(id: "cb05", code: "CB05", name: "Building 5",
               floors: floors(cb: "CB05", levels: ["Level 1","Level 2","Level 3","Level 4"]),
               lat: -33.8801, long: 151.2021),
-        .init(id: "cb06", code: "CB06", name: "Peter Johnson Building (DAB)",
+        .init(id: "cb06", code: "CB06", name: "Building 6",
               floors: floors(cb: "CB06", levels: ["Level 1","Level 2","Level 3","Level 4","Level 5","Level 6"]),
               lat: -33.8831, long: 151.2021),
-        .init(id: "cb07", code: "CB07", name: "Vicki Sara Building",
+        .init(id: "cb07", code: "CB07", name: "Building 7",
               floors: floors(cb: "CB07", levels: ["Level 1","Level 2","Level 3","Level 4","Level 5"]),
               lat: -33.8830, long: 151.1999),
-        .init(id: "cb08", code: "CB08", name: "Chau Chak Wing Building",
+        .init(id: "cb08", code: "CB08", name: "Building 8",
               floors: floors(cb: "CB08", levels: ["Level 1","Level 2","Level 3","Level 4","Level 5","Level 6","Level 7"]),
               lat: -33.8809, long: 151.2013),
         .init(id: "cb09", code: "CB09", name: "Building 9",
               floors: floors(cb: "CB09", levels: ["Level 1","Level 2","Level 3","Level 4"]),
               lat: -33.8835, long: 151.2016),
-        .init(id: "cb10", code: "CB10", name: "Fairfax Building",
+        .init(id: "cb10", code: "CB10", name: "Building 10",
               floors: floors(cb: "CB10", levels: ["Level 1","Level 2","Level 3","Level 4","Level 5","Level 6"]),
               lat: -33.8836, long: 151.1990),
-        .init(id: "cb11", code: "CB11", name: "FEIT Building",
+        .init(id: "cb11", code: "CB11", name: "Building 11",
               floors: floors(cb: "CB11", levels: ["Level 4","Level 5","Level 6","Level 7","Level 8"]),
               lat: -33.8840, long: 151.1992),
     ]

@@ -118,7 +118,6 @@ struct CreatePostRootView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
-                appState.start()
                 if step == 1 && postedDraft == nil {
                     showNearestBuildingSuggestion()
                 }

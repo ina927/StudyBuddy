@@ -256,11 +256,11 @@ struct ProfileView: View {
         guard let user = appState.currentUser else { return AnyView(EmptyView()) }
 
         let activeIndices = appState.posts.indices.filter {
-            appState.posts[$0].hostUsername == user.username &&
+            appState.posts[$0].hostUserID == user.id &&
             appState.posts[$0].computedStatus != .finished
         }
         let pastIndices = appState.posts.indices.filter {
-            appState.posts[$0].hostUsername == user.username &&
+            appState.posts[$0].hostUserID == user.id &&
             appState.posts[$0].computedStatus == .finished
         }
 

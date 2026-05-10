@@ -11,6 +11,8 @@ struct FeedView: View {
     @EnvironmentObject var appState: AppState
 
     @State private var query = ""
+    @State private var debouncedQuery = ""
+    @State private var searchDebounceTask: Task<Void, Never>?
     @State private var showFilterSheet = false
 
     @State private var selectedStatuses: Set<StudyPost.Status> = [.ongoing, .notStarted]
@@ -64,25 +66,28 @@ struct FeedView: View {
         if !showAllTime {
             tokens.append(.init(label: selectedDate.formatted(date: .abbreviated, time: .omitted), type: .date))
         }
-        
+
         return tokens
     }
 
     private var filtered: [StudyPost] {
-        appState.posts.filter { post in
+        let degreesSet = Set(selectedDegrees)
+        let subjectsSet = Set(selectedSubjects)
+        let normalizedQuery = debouncedQuery.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        return appState.posts.filter { post in
             let statusPass = selectedStatuses.isEmpty || selectedStatuses.contains(post.computedStatus)
-            let degreePass = selectedDegrees.isEmpty || !Set(post.hostDegrees).isDisjoint(with: Set(selectedDegrees))
-            let subjectPass = selectedSubjects.isEmpty || !Set(post.subjects).isDisjoint(with: Set(selectedSubjects))
+            let degreePass = degreesSet.isEmpty || !Set(post.hostDegrees).isDisjoint(with: degreesSet)
+            let subjectPass = subjectsSet.isEmpty || !Set(post.subjects).isDisjoint(with: subjectsSet)
             let vibePass = selectedVibes.isEmpty || selectedVibes.contains(post.vibe)
             let buildingPass = showAllBuildings || selectedBuildings.contains(post.buildingCode)
             let timePass = showAllTime || (post.startTime <= toDate && post.endTime >= fromDate)
 
-            let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            let queryPass = q.isEmpty
-                || post.title.lowercased().contains(q)
-                || post.bodyText.lowercased().contains(q)
-                || post.hostUsername.lowercased().contains(q)
-                || post.subjects.joined(separator: " ").lowercased().contains(q)
+            let queryPass = normalizedQuery.isEmpty
+                || post.title.lowercased().contains(normalizedQuery)
+                || post.bodyText.lowercased().contains(normalizedQuery)
+                || post.hostUsername.lowercased().contains(normalizedQuery)
+                || post.subjects.joined(separator: " ").lowercased().contains(normalizedQuery)
 
             return statusPass && degreePass && subjectPass && vibePass && buildingPass && timePass && queryPass
         }
@@ -214,6 +219,22 @@ struct FeedView: View {
                 )
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
+            }
+            .onAppear {
+                debouncedQuery = query
+            }
+            .onDisappear {
+                searchDebounceTask?.cancel()
+            }
+            .onChange(of: query) { oldValue, newValue in
+                searchDebounceTask?.cancel()
+                searchDebounceTask = Task {
+                    try? await Task.sleep(nanoseconds: 180_000_000)
+                    if Task.isCancelled { return }
+                    await MainActor.run {
+                        debouncedQuery = newValue
+                    }
+                }
             }
         }
     }

@@ -111,11 +111,14 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func saveUser(_ user: UserProfile) {
-        database.collection("users").document(user.id).setData(user.convertFirestore()) { error in
-            if let error {
-                self.status = "Failed to save user: \(error.localizedDescription)"
-            } else {
-                self.status = "Saved user"
+        database.collection("users").document(user.id).setData(user.convertFirestore()) { [weak self] error in
+            guard let self else { return }
+            Task { @MainActor in
+                if let error {
+                    self.status = "Failed to save user: \(error.localizedDescription)"
+                } else {
+                    self.status = "Saved user"
+                }
             }
         }
     }
@@ -144,56 +147,56 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func addPost(from draft: CreatePostDraft) async {
-        guard let user = currentUser else { return }
-        let postId = UUID().uuidString
-        Task {
-            
-            var imageURL: String? = nil
-            if let image = draft.postImage {
-                imageURL = await uploadImage(image, identifier: postId, folder: "posts")
-            }
-            
-            let post = StudyPost(
-                id: postId,
-                hostUserID: user.id,
-                hostUsername: user.username,
-                hostYear: user.year,
-                hostDegrees: user.degrees,
-                hostMajor: user.major,
-                title: draft.title,
-                bodyText: draft.postBody,
-                buildingCode: draft.buildingCode,
-                buildingName: draft.buildingName,
-                floor: draft.floor,
-                locationDescription: draft.locationDescription,
-                photoAssetName: imageURL,
-                subjects: draft.subjects,
-                vibe: draft.vibe,
-                capacity: draft.capacity,
-                startTime: draft.startTime,
-                endTime: draft.endTime,
-                createdAt: Date(),
-                statusOverride: nil
-            )
-            
-            await MainActor.run {
-                posts.insert(post, at: 0)
-                selectedTab = 0
-            }
-            savePost(post)
-        }
+        guard let user = await MainActor.run(body: { currentUser }) else { return }
 
+        let postId = UUID().uuidString
+        
+        var imageURL: String? = nil
+        if let image = draft.postImage {
+            imageURL = await uploadImage(image, identifier: postId, folder: "posts")
+        }
+        
+        let post = StudyPost(
+            id: postId,
+            hostUserID: user.id,
+            hostUsername: user.username,
+            hostYear: user.year,
+            hostDegrees: user.degrees,
+            hostMajor: user.major,
+            title: draft.title,
+            bodyText: draft.postBody,
+            buildingCode: draft.buildingCode,
+            buildingName: draft.buildingName,
+            floor: draft.floor,
+            locationDescription: draft.locationDescription,
+            photoAssetName: imageURL,
+            subjects: draft.subjects,
+            vibe: draft.vibe,
+            capacity: draft.capacity,
+            startTime: draft.startTime,
+            endTime: draft.endTime,
+            createdAt: Date(),
+            statusOverride: nil
+        )
+        
+        await MainActor.run {
+            posts.insert(post, at: 0)
+            selectedTab = 0
+        }
+        savePost(post)
     }
     
     func savePost(_ post: StudyPost) {
-        database.collection("posts").document(post.id).setData(post.convertFirestore()) { error in
-            if let error {
-                self.status = "Failed to save post: \(error.localizedDescription)"
-            } else {
-                self.status = "Saved post"
+        database.collection("posts").document(post.id).setData(post.convertFirestore()) { [weak self] error in
+            guard let self else { return }
+            Task { @MainActor in
+                if let error {
+                    self.status = "Failed to save post: \(error.localizedDescription)"
+                } else {
+                    self.status = "Saved post"
+                }
             }
         }
-        print(self.status)
     }
     
     func updatePost(_ post: StudyPost) {
@@ -204,9 +207,12 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     func deletePost(_ post: StudyPost) {
         posts.removeAll { $0.id == post.id }
-        database.collection("posts").document(post.id).delete() { error in
+        database.collection("posts").document(post.id).delete() { [weak self] error in
+            guard let self else { return }
             if let error {
-                self.status = "Failed to delete post: \(error.localizedDescription)"
+                Task { @MainActor in
+                    self.status = "Failed to delete post: \(error.localizedDescription)"
+                }
             }
         }
     }
