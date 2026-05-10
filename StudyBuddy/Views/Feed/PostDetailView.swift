@@ -142,9 +142,10 @@ struct PostDetailView: View {
                                     .font(.system(size: 11))
                                     .foregroundStyle(AppTheme.Colors.textTertiary)
                                 Text(timeText)
-                                    .font(AppTheme.Typography.label.weight(.semibold))
-                                    .foregroundStyle(.black)
+                                    .font(AppTheme.Typography.bodySmall)
+                                    .foregroundStyle(AppTheme.Colors.textSecondary)
                             }
+                            
                             if closingSoon {
                                 Text("Closing soon")
                                     .font(AppTheme.Typography.labelSmall.weight(.semibold))
@@ -167,7 +168,7 @@ struct PostDetailView: View {
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, AppTheme.Spacing.sm)
                                 .padding(.vertical, AppTheme.Spacing.xxs)
-                                .background(AppTheme.Colors.primary)
+                                .background(MetadataStore.vibeColor(post.vibe))
                                 .clipShape(Capsule())
                             Spacer()
                         }

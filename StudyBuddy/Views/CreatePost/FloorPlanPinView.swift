@@ -98,6 +98,7 @@ struct FloorPlanCanvas: View {
 
 struct LocationPhotoSection: View {
     @Binding var image: UIImage?
+    var existingPhotoAssetName: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.xxs + 2) {
@@ -109,7 +110,40 @@ struct LocationPhotoSection: View {
                     .font(AppTheme.Typography.label)
                     .foregroundStyle(AppTheme.Colors.locationText)
             }
-            ImagePickerView(selectedImage: $image)
+            
+            if image == nil && existingPhotoAssetName != nil {
+                // Show existing photo indicator
+                VStack(spacing: AppTheme.Spacing.xs) {
+                    Button {
+                        // Trigger image picker
+                    } label: {
+                        HStack {
+                            Image(systemName: "photo.fill")
+                                .font(.system(size: 24))
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Existing photo")
+                                    .font(AppTheme.Typography.bodyMedium.weight(.semibold))
+                                Text("Tap to change")
+                                    .font(AppTheme.Typography.bodySmall)
+                                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                            }
+                            Spacer()
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(AppTheme.Colors.primary)
+                        }
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                        .padding(AppTheme.Spacing.md)
+                        .background(AppTheme.Colors.surface)
+                        .cornerRadius(AppTheme.Radius.lg)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    ImagePickerView(selectedImage: $image)
+                }
+            } else {
+                ImagePickerView(selectedImage: $image)
+            }
         }
     }
 }
@@ -169,7 +203,7 @@ struct FloorPlanPinView: View {
                     .cornerRadius(AppTheme.Radius.lg)
                 }
 
-                LocationPhotoSection(image: $draft.postImage)
+                LocationPhotoSection(image: $draft.postImage, existingPhotoAssetName: draft.existingPhotoAssetName)
 
                 Button {
                     onNext()
