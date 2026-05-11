@@ -54,78 +54,6 @@ struct PostDetailsView: View {
                 }
                 .buttonStyle(.plain)
 
-                fieldBlock(title: "Title", required: true) {
-                    TextField("Post title", text: $draft.title)
-                        .font(AppTheme.Typography.bodyMedium)
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
-                        .padding(AppTheme.Spacing.md)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(AppTheme.Colors.surface)
-                        .cornerRadius(AppTheme.Radius.md)
-                }
-
-                fieldBlock(title: "Post Body", required: true) {
-                    TextField("Write your post...", text: $draft.postBody, axis: .vertical)
-                        .font(AppTheme.Typography.bodyMedium)
-                        .foregroundStyle(AppTheme.Colors.textPrimary)
-                        .lineLimit(4, reservesSpace: true)
-                        .padding(AppTheme.Spacing.md)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(AppTheme.Colors.surface)
-                        .cornerRadius(AppTheme.Radius.md)
-                }
-
-                fieldBlock(title: "Study Date", required: true) {
-                    HStack {
-                        DatePicker("Study Date", selection: $selectedDate, in: Date()..., displayedComponents: .date)
-                            .labelsHidden()
-                            .font(AppTheme.Typography.bodyMedium)
-                        Spacer()
-                    }
-                    .padding(AppTheme.Spacing.md)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(AppTheme.Colors.surface)
-                    .cornerRadius(AppTheme.Radius.md)
-                }
-
-                fieldBlock(title: "Study Time", required: true) {
-                    HStack(spacing: AppTheme.Spacing.md) {
-                        HStack(spacing: 8) {
-                            Text("Start")
-                                .font(AppTheme.Typography.bodyMedium)
-                                .foregroundStyle(AppTheme.Colors.textSecondary)
-                            DatePicker("", selection: $startTime, displayedComponents: .hourAndMinute)
-                                .labelsHidden()
-                                .font(AppTheme.Typography.bodyMedium)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        HStack(spacing: 8) {
-                            Text("End")
-                                .font(AppTheme.Typography.bodyMedium)
-                                .foregroundStyle(AppTheme.Colors.textSecondary)
-                            DatePicker("", selection: $endTime, displayedComponents: .hourAndMinute)
-                                .labelsHidden()
-                                .font(AppTheme.Typography.bodyMedium)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .padding(AppTheme.Spacing.md)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(AppTheme.Colors.surface)
-                    .cornerRadius(AppTheme.Radius.md)
-                }
-
-                if normalizedEnd <= normalizedStart {
-                    Text("End time must be later than start time.")
-                        .font(AppTheme.Typography.bodySmall)
-                        .foregroundStyle(.red)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
                 fieldBlock(title: "Vibe", required: true) {
                     HStack {
                         Picker("Vibe", selection: $draft.vibe) {
@@ -154,6 +82,80 @@ struct PostDetailsView: View {
                         maxSelection: 3
                     )
                     .frame(maxWidth: .infinity)
+                }
+
+                fieldBlock(title: "Title", required: true) {
+                    TextField("Post title", text: $draft.title)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                        .padding(AppTheme.Spacing.md)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(AppTheme.Colors.surface)
+                        .cornerRadius(AppTheme.Radius.md)
+                }
+
+                fieldBlock(title: "Post Body", required: true) {
+                    TextField("Write your post...", text: $draft.postBody, axis: .vertical)
+                        .font(AppTheme.Typography.bodyMedium)
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                        .lineLimit(4, reservesSpace: true)
+                        .padding(AppTheme.Spacing.md)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(AppTheme.Colors.surface)
+                        .cornerRadius(AppTheme.Radius.md)
+                }
+
+                fieldBlock(title: "Study Date", required: true) {
+                    DatePicker("Study Date", selection: $selectedDate, in: Date()..., displayedComponents: .date)
+                        .labelsHidden()
+                        .datePickerStyle(.compact)
+                        .tint(AppTheme.Colors.primary)
+                        .padding(AppTheme.Spacing.md)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(AppTheme.Colors.surface)
+                        .cornerRadius(AppTheme.Radius.md)
+                }
+
+                fieldBlock(title: "Study Time", required: true) {
+                    HStack(spacing: AppTheme.Spacing.md) {
+                        HStack(spacing: 8) {
+                            Text("Start")
+                                .font(AppTheme.Typography.bodyMedium)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                            DatePicker("", selection: $startTime, displayedComponents: .hourAndMinute)
+                                .labelsHidden()
+                                .datePickerStyle(.compact)
+                                .tint(AppTheme.Colors.primary)
+                                .font(AppTheme.Typography.bodyMedium)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        HStack(spacing: 8) {
+                            Text("End")
+                                .font(AppTheme.Typography.bodyMedium)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                            DatePicker("", selection: $endTime, displayedComponents: .hourAndMinute)
+                                .labelsHidden()
+                                .datePickerStyle(.compact)
+                                .tint(AppTheme.Colors.primary)
+                                .font(AppTheme.Typography.bodyMedium)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(AppTheme.Spacing.md)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(AppTheme.Colors.surface)
+                    .cornerRadius(AppTheme.Radius.md)
+                }
+
+                if normalizedEnd <= normalizedStart {
+                    Text("End time must be later than start time.")
+                        .font(AppTheme.Typography.bodySmall)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 fieldBlock(title: "Capacity", required: true) {

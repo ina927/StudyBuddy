@@ -119,6 +119,31 @@ struct PostDetailView: View {
                             PostStatusBadge(status: post.computedStatus)
                         }
 
+                        HStack {
+                            Text(post.vibe)
+                                .font(AppTheme.Typography.labelSmall.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, AppTheme.Spacing.sm)
+                                .padding(.vertical, AppTheme.Spacing.xxs)
+                                .background(MetadataStore.vibeColor(post.vibe))
+                                .clipShape(Capsule())
+                            Spacer()
+                        }
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: AppTheme.Spacing.xs) {
+                                ForEach(post.subjects, id: \.self) { subject in
+                                    Text(subject)
+                                        .font(AppTheme.Typography.labelSmall)
+                                        .foregroundStyle(AppTheme.Colors.textSecondary)
+                                        .padding(.horizontal, AppTheme.Spacing.sm)
+                                        .padding(.vertical, AppTheme.Spacing.xxs)
+                                        .background(Color.gray.opacity(0.18))
+                                        .clipShape(Capsule())
+                                }
+                            }
+                        }
+
                         Text(post.title)
                             .font(AppTheme.Typography.postTitle)
                             .foregroundStyle(AppTheme.Colors.textPrimary)
@@ -162,31 +187,6 @@ struct PostDetailView: View {
                             Text("Capacity \(post.capacity)")
                                 .font(AppTheme.Typography.bodySmall)
                                 .foregroundStyle(AppTheme.Colors.textSecondary)
-                        }
-
-                        HStack {
-                            Text(post.vibe)
-                                .font(AppTheme.Typography.labelSmall.weight(.semibold))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, AppTheme.Spacing.sm)
-                                .padding(.vertical, AppTheme.Spacing.xxs)
-                                .background(MetadataStore.vibeColor(post.vibe))
-                                .clipShape(Capsule())
-                            Spacer()
-                        }
-
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: AppTheme.Spacing.xs) {
-                                ForEach(post.subjects, id: \.self) { subject in
-                                    Text(subject)
-                                        .font(AppTheme.Typography.labelSmall)
-                                        .foregroundStyle(AppTheme.Colors.textSecondary)
-                                        .padding(.horizontal, AppTheme.Spacing.sm)
-                                        .padding(.vertical, AppTheme.Spacing.xxs)
-                                        .background(Color.gray.opacity(0.18))
-                                        .clipShape(Capsule())
-                                }
-                            }
                         }
 
                         Divider().background(AppTheme.Colors.divider)

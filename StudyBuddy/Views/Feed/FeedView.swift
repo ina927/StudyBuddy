@@ -91,7 +91,7 @@ struct FeedView: View {
 
             return statusPass && degreePass && subjectPass && vibePass && buildingPass && timePass && queryPass
         }
-        .sorted { $0.createdAt > $1.createdAt }
+        .sorted { $0.startTime < $1.startTime }
     }
 
     var body: some View {
