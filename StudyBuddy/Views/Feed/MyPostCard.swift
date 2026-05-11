@@ -80,4 +80,3 @@ struct MyPostCard: View {
         return "\(start) - \(end), \(dayFmt.string(from: post.startTime))"
     }
 }
-

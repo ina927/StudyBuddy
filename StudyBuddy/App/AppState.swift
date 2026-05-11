@@ -118,8 +118,19 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
                     self.status = "Failed to save user: \(error.localizedDescription)"
                 } else {
                     self.status = "Saved user"
+                    self.updatePostsForUser(user)
                 }
             }
+        }
+    }
+
+    private func updatePostsForUser(_ user: UserProfile) {
+        for i in posts.indices where posts[i].hostUserID == user.id {
+            posts[i].hostUsername = user.username
+            posts[i].hostYear = user.year
+            posts[i].hostDegrees = user.degrees
+            posts[i].hostMajor = user.major
+            savePost(posts[i])
         }
     }
     
@@ -184,7 +195,6 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         await MainActor.run {
             posts.insert(post, at: 0)
-            selectedTab = 0
         }
         savePost(post)
     }
