@@ -79,8 +79,8 @@ struct LoginDetailView: View {
                             await appState.login(email: email, password: password)
                             
                             // Check if login failed
-                            if case .failure(let message) = appState.uiState {
-                                errorMessage = message
+                            if case .failure(let error) = appState.uiState {
+                                errorMessage = error.userMessage
                                 showError = true
                             }
                         }

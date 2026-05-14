@@ -20,13 +20,6 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var currentLoc: CLLocation?
     @Published var isLoading = false
 
-    enum UIState {
-        case idle
-        case loading
-        case success(String)
-        case failure(String)
-    }
-
     @Published private(set) var uiState: UIState = .idle
 
     // Keep designated init explicit to avoid default-argument actor warnings.
@@ -65,10 +58,14 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         isLoading = false
     }
 
-    private func setFailure(_ message: String) {
-        uiState = .failure(message)
-        status = message
+    private func setFailure(_ error: UserFacingError) {
+        uiState = .failure(error)
+        status = error.userMessage
         isLoading = false
+    }
+
+    private func setFailure(_ message: String) {
+        setFailure(.unknown(message))
     }
 
     func signUp(email: String, password: String, profile: UserProfile) async {
@@ -97,7 +94,7 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
             await loadPosts()
             setSuccess("Signed up")
         } catch {
-            setFailure("Sign up failed: \(error.localizedDescription)")
+            setFailure(.auth("Sign up failed: \(error.localizedDescription)"))
         }
     }
 
@@ -107,7 +104,7 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         do {
             let uid = try await authService.signIn(email: email, password: password)
             guard let user = await userRepository.getUser(id: uid) else {
-                setFailure("Login failed: user profile not found")
+                setFailure(.auth("Login failed: user profile not found"))
                 return
             }
 
@@ -117,7 +114,7 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
             await loadPosts()
             setSuccess("Logged in")
         } catch {
-            setFailure("Login failed: \(error.localizedDescription)")
+            setFailure(.auth("Login failed: \(error.localizedDescription)"))
         }
     }
 
@@ -130,7 +127,7 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
             posts = []
             setSuccess("Logged out")
         } catch {
-            setFailure("Logout failed: \(error.localizedDescription)")
+            setFailure(.auth("Logout failed: \(error.localizedDescription)"))
         }
     }
 
@@ -153,7 +150,7 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         do {
             posts = try await postRepository.loadPosts()
         } catch {
-            setFailure("Failed to load posts: \(error.localizedDescription)")
+            setFailure(.firestore("Failed to load posts: \(error.localizedDescription)"))
         }
     }
 
@@ -194,18 +191,19 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         )
 
         posts.insert(post, at: 0)
-        savePost(post)
+        savePost(post) { [weak self] in
+            self?.posts.removeAll { $0.id == post.id }
+        }
     }
 
     func saveUser(_ user: UserProfile) {
         userRepository.saveUser(user) { [weak self] errorMessage in
             Task { @MainActor in
-                self?.setFailure("Failed to save user: \(errorMessage)")
+                self?.setFailure(.firestore("Failed to save user: \(errorMessage)"))
             }
         }
 
         updatePostsForUser(user)
-        setSuccess("Saved user")
     }
 
     private func updatePostsForUser(_ user: UserProfile) {
@@ -222,26 +220,37 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         await userRepository.getUser(id: id)
     }
 
-    func savePost(_ post: StudyPost) {
+    func savePost(_ post: StudyPost, onFailure: (() -> Void)? = nil) {
         postRepository.savePost(post) { [weak self] errorMessage in
             Task { @MainActor in
-                self?.setFailure("Failed to save post: \(errorMessage)")
+                onFailure?()
+                self?.setFailure(.firestore("Failed to save post: \(errorMessage)"))
             }
         }
     }
 
     func updatePost(_ post: StudyPost) {
         guard let idx = posts.firstIndex(where: { $0.id == post.id }) else { return }
+        let previous = posts[idx]
+        guard previous != post else { return }
         posts[idx] = post
-        savePost(post)
+        savePost(post) { [weak self] in
+            guard let self else { return }
+            if let rollbackIdx = self.posts.firstIndex(where: { $0.id == previous.id }) {
+                self.posts[rollbackIdx] = previous
+            }
+        }
     }
 
     func deletePost(_ post: StudyPost) {
+        guard posts.contains(where: { $0.id == post.id }) else { return }
+        let previousPosts = posts
         posts.removeAll { $0.id == post.id }
 
         postRepository.deletePost(post.id) { [weak self] errorMessage in
             Task { @MainActor in
-                self?.setFailure("Failed to delete post: \(errorMessage)")
+                self?.posts = previousPosts
+                self?.setFailure(.firestore("Failed to delete post: \(errorMessage)"))
             }
         }
     }
@@ -259,13 +268,13 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        setFailure("Location failed: \(error.localizedDescription)")
+        setFailure(.location("Location failed: \(error.localizedDescription)"))
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .denied, .restricted:
-            setFailure("Location permission denied")
+            setFailure(.location("Location permission denied"))
         case .notDetermined:
             locManager.requestWhenInUseAuthorization()
         default:
