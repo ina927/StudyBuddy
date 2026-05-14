@@ -1,13 +1,24 @@
-# StudyBuddy
-StudyBuddy is an iOS app built for UTS students to find and share study spots on campus in real time. Students can post where they're studying, what subject they're working on, and upload a photo of their exact location so others can find them easily.
+# 📚 StudyBuddy
 
-### Core Features
-- Create a study post with subject, vibe, capacity, and start/end time
-- Automatically detects your nearest building using your location
-- Place a pin on a floor plan to show your exact spot
-- Upload a photo of your study location
-- Browse and filter active study posts by building, subject, vibe, and time
-- User profiles with profile picture and degree information
+> **StudyBuddy** is an iOS app for UTS students to discover, share, and join study sessions on campus in real time.
+Students can post where they are studying, what they are studying, and exactly where to find them using floor-plan pinning and location photos.
+
+---
+
+## ✨ What StudyBuddy Does
+
+- Create study posts with:
+  - subject(s)
+  - vibe / study style
+  - capacity
+  - start/end time
+- Detect nearby campus context using device location (with user permission).
+- Let hosts pin their exact position on a floor plan.
+- Support photo uploads for easier wayfinding.
+- Browse active posts in a feed and open details for each session.
+- Maintain user profile data (name, degree(s), year, major, photo).
+
+---
 
 ### Getting Started
 Download the files or clone the repo, drag the given GoogleService-Info.plist file to the root folder before building. Make sure to run on a device for accurate building detection.
@@ -18,5 +29,54 @@ https://youtu.be/aBZPM54VQe4?si=RrZNhj1wuree4xCC
 ### Figma
 https://www.figma.com/design/FPP1hrn9tWTugRvbyZmh7G/StudyBuddy?node-id=0-1&t=4MrD6nXgzOLwCekl-1
 
-### Github Repo
-https://github.com/ina927/StudyBuddy
+---
+
+## 🧱 Architecture Overview
+
+The project follows a lightweight layered structure with clear separation between UI, app state orchestration, models, and services:
+
+- **Views (`StudyBuddy/Views`)**
+  - SwiftUI screens and reusable components.
+- **App state (`StudyBuddy/App`)**
+  - `AppState` coordinates auth/session, posts, user data, UI status, and service orchestration.
+  - `UIState` + `UserFacingError` provide typed UI status and error presentation.
+- **Models (`StudyBuddy/Models`)**
+  - `StudyPost`, `UserProfile`, `CreatePostDraft`.
+- **Services (`StudyBuddy/Services`)**
+  - Firebase repositories (`PostRepository`, `UserRepository`)
+  - Auth wrapper (`AuthService`)
+  - Media upload (`ImageStorageService`)
+  - Location abstraction (`LocationService`)
+  - Static metadata (`MetadataStore`)
+  - Firestore path constants (`FirestorePath`)
+
+---
+
+## 🗂️ Directory Structure
+
+```text
+StudyBuddy/
+├─ App/
+│  ├─ AppState.swift
+│  └─ UIState.swift
+├─ Models/
+│  ├─ CreatePostDraft.swift
+│  ├─ StudyPost.swift
+│  └─ UserProfile.swift
+├─ Services/
+│  ├─ AuthService.swift
+│  ├─ FirestorePath.swift
+│  ├─ ImageStorageService.swift
+│  ├─ LocationService.swift
+│  ├─ MetadataStore.swift
+│  ├─ PostRepository.swift
+│  └─ UserRepository.swift
+├─ Views/
+│  ├─ Auth/
+│  ├─ Common/
+│  ├─ CreatePost/
+│  └─ Feed/
+├─ Assets.xcassets/
+├─ ContentView.swift
+├─ StudyBuddyApp.swift
+└─ ...
