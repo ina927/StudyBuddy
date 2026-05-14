@@ -23,6 +23,9 @@ Students can post where they are studying, what they are studying, and exactly w
 ### Getting Started
 Download the files or clone the repo, drag the given **GoogleService-Info.plist file** (attached to the canvas submission) to the root folder before building. Make sure to run on a device for accurate building detection.
 
+### Github Repo
+https://github.com/ina927/StudyBuddy
+
 ### Demo Video
 https://youtu.be/aBZPM54VQe4?si=RrZNhj1wuree4xCC
 
