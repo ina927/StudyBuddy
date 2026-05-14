@@ -15,6 +15,7 @@ struct LoginDetailView: View {
     @State private var showPassword = false
     @State private var showSignUp   = false
     @State private var showError    = false
+    @State private var errorMessage = ""
 
     private var canLogin: Bool { !email.isEmpty && !password.isEmpty }
 
@@ -62,14 +63,27 @@ struct LoginDetailView: View {
                     }
 
                     if showError {
-                        Text("Please enter your email and password.")
+                        Text(errorMessage)
                             .font(.caption)
                             .foregroundStyle(.red)
+                            .padding(.vertical, 4)
                     }
 
                     Button {
-                        guard canLogin else { showError = true; return }
-                        Task { await appState.login(email: email, password: password) }
+                        guard canLogin else {
+                            errorMessage = "Please enter your email and password."
+                            showError = true
+                            return
+                        }
+                        Task {
+                            await appState.login(email: email, password: password)
+                            
+                            // Check if login failed
+                            if case .failure(let message) = appState.uiState {
+                                errorMessage = message
+                                showError = true
+                            }
+                        }
                     } label: {
                         Text("Login")
                             .font(.body.weight(.semibold))
@@ -79,6 +93,7 @@ struct LoginDetailView: View {
                             .background(canLogin ? AppTheme.Colors.primary : AppTheme.Colors.primary.opacity(0.4))
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
+                    .disabled(appState.isLoading)
                 }
                 .padding(24)
 
