@@ -9,6 +9,7 @@ import Foundation
 import FirebaseStorage
 import UIKit
 
+/// Handles image uploads to Firebase Storage
 protocol ImageStorageServiceProtocol {
     func uploadImage(_ image: UIImage, identifier: String, folder: String) async -> String?
 }

@@ -10,6 +10,9 @@ import SwiftUI
 struct PostDetailView: View {
     @EnvironmentObject private var appState: AppState
     @State var post: StudyPost
+
+    // MARK: - State
+
     @State private var showEdit = false
     @State private var showFloorMap = false
     @Environment(\.dismiss) private var dismiss
@@ -19,6 +22,8 @@ struct PostDetailView: View {
     @State private var showFullConfirm = false
     @State private var showEndConfirm = false
     @State private var showDeleteConfirm = false
+
+    // MARK: - Computed Properties
 
     private var isHost: Bool {
         appState.currentUser?.id == post.hostUserID

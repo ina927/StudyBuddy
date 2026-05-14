@@ -9,7 +9,6 @@ import Foundation
 import PhotosUI
 
 private extension String {
-    // Treat persisted empty strings as nil to keep optional semantics stable.
     var nilIfBlank: String? { isEmpty ? nil : self }
 }
 
@@ -26,7 +25,6 @@ struct UserProfile: Identifiable, Codable {
     var profilePic: String?
 
     func convertFirestore() -> [String: Any] {
-        // Persist only semantic values to avoid empty-string drift in round-trips.
         var payload: [String: Any] = [
             "email": email,
             "firstName": firstName,

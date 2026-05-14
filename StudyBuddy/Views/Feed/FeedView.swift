@@ -10,6 +10,8 @@ import SwiftUI
 struct FeedView: View {
     @EnvironmentObject var appState: AppState
 
+    // MARK: - State
+
     @State private var query = ""
     @State private var debouncedQuery = ""
     @State private var searchDebounceTask: Task<Void, Never>?
@@ -27,6 +29,8 @@ struct FeedView: View {
     @State private var selectedDate = Calendar.current.startOfDay(for: Date())
     @State private var fromMinute = Calendar.current.component(.hour, from: Date()) * 60 + Calendar.current.component(.minute, from: Date())
     @State private var toMinute = 1439
+
+    // MARK: - Computed Properties
 
     private var fromDate: Date {
         Calendar.current.date(byAdding: .minute, value: fromMinute, to: selectedDate) ?? selectedDate
@@ -70,11 +74,14 @@ struct FeedView: View {
         return tokens
     }
 
+    // MARK: - Filtering Logic
+
     private var filtered: [StudyPost] {
         let degreesSet = Set(selectedDegrees)
         let subjectsSet = Set(selectedSubjects)
         let normalizedQuery = debouncedQuery.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
+        // Apply all active filters and sort by start time
         return appState.posts.filter { post in
             let statusPass = selectedStatuses.isEmpty || selectedStatuses.contains(post.computedStatus)
             let degreePass = degreesSet.isEmpty || !Set(post.hostDegrees).isDisjoint(with: degreesSet)
@@ -93,6 +100,8 @@ struct FeedView: View {
         }
         .sorted { $0.startTime < $1.startTime }
     }
+
+    // MARK: - Body
 
     var body: some View {
         NavigationStack {
@@ -238,6 +247,8 @@ struct FeedView: View {
             }
         }
     }
+
+    // MARK: - Filter Actions
 
     private func removeToken(_ token: FilterToken) {
         switch token.type {

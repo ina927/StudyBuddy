@@ -8,6 +8,7 @@
 import Foundation
 import FirebaseAuth
 
+/// Handles Firebase Authentication operations
 protocol AuthServiceProtocol {
     func createUser(email: String, password: String) async throws -> String
     func signIn(email: String, password: String) async throws -> String

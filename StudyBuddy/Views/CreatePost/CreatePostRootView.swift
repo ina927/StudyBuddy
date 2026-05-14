@@ -11,6 +11,8 @@ import CoreLocation
 struct CreatePostRootView: View {
     @EnvironmentObject private var appState: AppState
 
+    // MARK: - State
+
     @State private var draft = CreatePostDraft()
     @State private var step = 1
     private let totalSteps = 3
@@ -20,6 +22,8 @@ struct CreatePostRootView: View {
     @State private var showNearestBuildingPopup = false
     @State private var nearestBuilding: BuildingOption?
     @State private var shouldAutoExpandBuildingId: String?
+
+    // MARK: - Body
 
     var body: some View {
         NavigationStack {
@@ -142,6 +146,8 @@ struct CreatePostRootView: View {
         }
     }
 
+    // MARK: - Computed Properties
+
     private var stepTitle: String {
         switch step {
         case 1: return "Create Post"
@@ -153,6 +159,7 @@ struct CreatePostRootView: View {
     private func showNearestBuildingSuggestion() {
         guard let loc = appState.currentLoc else { return }
 
+        // Find closest building based on user's current location
         let candidates = MetadataStore.buildings
             .map { b -> (BuildingOption, CLLocationDistance) in
                 let center = CLLocation(latitude: b.lat, longitude: b.long)

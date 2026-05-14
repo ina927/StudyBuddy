@@ -7,6 +7,7 @@
 
 import CoreLocation
 
+/// Provides user location updates via CoreLocation
 protocol LocationServiceProtocol: AnyObject {
     var onLocationUpdate: ((CLLocation) -> Void)? { get set }
     var onLocationError: ((Error) -> Void)? { get set }

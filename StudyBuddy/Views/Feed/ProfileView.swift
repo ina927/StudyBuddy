@@ -10,6 +10,9 @@ import PhotosUI
 
 struct ProfileView: View {
     @EnvironmentObject private var appState: AppState
+
+    // MARK: - State
+
     @State private var isEditing = false
     @State private var profileImage: UIImage? = nil
     @State private var showPhotoOptions = false
@@ -20,6 +23,8 @@ struct ProfileView: View {
     @State private var profileTab: ProfileTab = .profile
 
     private let headerPurple = AppTheme.Colors.primary
+
+    // MARK: - Body
 
     var body: some View {
         NavigationStack {
@@ -41,6 +46,8 @@ struct ProfileView: View {
             }
         }
     }
+
+    // MARK: - UI Sections
 
     private var headerSection: some View {
         ZStack(alignment: .topTrailing) {
@@ -211,6 +218,8 @@ struct ProfileView: View {
         }
         .padding(16)
     }
+
+    // MARK: - Helper Methods
 
     private func infoRow(label: String, value: String) -> some View {
         HStack {

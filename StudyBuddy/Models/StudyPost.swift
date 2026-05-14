@@ -9,7 +9,6 @@ import Foundation
 import FirebaseCore
 
 private extension String {
-    // Treat persisted empty strings as nil to keep optional semantics stable.
     var nilIfBlank: String? { isEmpty ? nil : self }
 }
 
@@ -58,7 +57,6 @@ struct StudyPost: Identifiable, Codable, Equatable {
     }
 
     func convertFirestore() -> [String: Any] {
-        // Persist only semantic values to avoid empty-string drift in round-trips.
         var payload: [String: Any] = [
             "hostUserID": hostUserID,
             "hostUsername": hostUsername,
@@ -127,12 +125,13 @@ struct StudyPost: Identifiable, Codable, Equatable {
               let createdAt = (data["createdAt"] as? Timestamp)?.dateValue()
         else { return nil }
 
+        // Use fallback asset name for missing or empty floorPlanAssetName
         let fallbackFloorPlanAssetName = fallbackFloorPlanAssetNameProvider(buildingCode, floor)
-
         let parsedFloorPlanAssetName = ((data["floorPlanAssetName"] as? String)?.isEmpty == false)
             ? (data["floorPlanAssetName"] as? String ?? fallbackFloorPlanAssetName)
             : fallbackFloorPlanAssetName
 
+        // Default pin position to center if not specified
         let parsedPinX = data["pinX"] as? Double ?? 0.5
         let parsedPinY = data["pinY"] as? Double ?? 0.5
 

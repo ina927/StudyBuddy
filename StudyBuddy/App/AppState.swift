@@ -21,7 +21,8 @@ final class AppState: NSObject, ObservableObject {
 
     @Published private(set) var uiState: UIState = .idle
 
-    // Keep designated init explicit to avoid default-argument actor warnings.
+    // MARK: - Initialization
+
     init(
         authService: AuthServiceProtocol,
         userRepository: UserRepositoryProtocol,
@@ -55,7 +56,6 @@ final class AppState: NSObject, ObservableObject {
         }
     }
 
-    // Keep no-arg init for existing call sites (AppState()).
     convenience override init() {
         self.init(
             authService: AuthService(),
@@ -65,6 +65,8 @@ final class AppState: NSObject, ObservableObject {
             locationService: LocationService()
         )
     }
+
+    // MARK: - UI State
 
     private func setLoading(_ message: String = "Loading") {
         uiState = .loading
@@ -87,6 +89,8 @@ final class AppState: NSObject, ObservableObject {
     private func setFailure(_ message: String) {
         setFailure(.unknown(message))
     }
+
+    // MARK: - Authentication
 
     func signUp(email: String, password: String, profile: UserProfile) async {
         guard !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
@@ -170,12 +174,14 @@ final class AppState: NSObject, ObservableObject {
         await loadPosts()
     }
 
-    // Keep public API used by views.
+    // MARK: - Image Upload
+
     func uploadImage(_ image: UIImage, identifier: String, folder: String) async -> String? {
         await imageStorageService.uploadImage(image, identifier: identifier, folder: folder)
     }
 
-    // Network I/O is delegated to services; this object owns UI state.
+    // MARK: - Posts
+
     func loadPosts() async {
         do {
             posts = try await postRepository.loadPosts()
@@ -220,11 +226,14 @@ final class AppState: NSObject, ObservableObject {
             statusOverride: nil
         )
 
+        // Optimistic update: add post immediately, rollback on failure
         posts.insert(post, at: 0)
         savePost(post) { [weak self] in
             self?.posts.removeAll { $0.id == post.id }
         }
     }
+
+    // MARK: - Users
 
     func saveUser(_ user: UserProfile) {
         userRepository.saveUser(user) { [weak self] errorMessage in
@@ -236,6 +245,7 @@ final class AppState: NSObject, ObservableObject {
         updatePostsForUser(user)
     }
 
+    // Update all posts authored by this user with new profile info
     private func updatePostsForUser(_ user: UserProfile) {
         for i in posts.indices where posts[i].hostUserID == user.id {
             posts[i].hostUsername = user.username
@@ -250,6 +260,8 @@ final class AppState: NSObject, ObservableObject {
         await userRepository.getUser(id: id)
     }
 
+    // MARK: - Post Management
+
     func savePost(_ post: StudyPost, onFailure: (() -> Void)? = nil) {
         postRepository.savePost(post) { [weak self] errorMessage in
             Task { @MainActor in
@@ -263,6 +275,8 @@ final class AppState: NSObject, ObservableObject {
         guard let idx = posts.firstIndex(where: { $0.id == post.id }) else { return }
         let previous = posts[idx]
         guard previous != post else { return }
+
+        // Optimistic update: apply changes immediately, rollback on failure
         posts[idx] = post
         savePost(post) { [weak self] in
             guard let self else { return }
@@ -274,6 +288,8 @@ final class AppState: NSObject, ObservableObject {
 
     func deletePost(_ post: StudyPost) {
         guard posts.contains(where: { $0.id == post.id }) else { return }
+
+        // Optimistic delete: remove immediately, restore on failure
         let previousPosts = posts
         posts.removeAll { $0.id == post.id }
 
@@ -284,6 +300,8 @@ final class AppState: NSObject, ObservableObject {
             }
         }
     }
+
+    // MARK: - Location
 
     func start() {
         locationService.start()
