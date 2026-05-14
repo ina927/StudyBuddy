@@ -7,25 +7,25 @@
 
 import Foundation
 import SwiftUI
- 
+
 struct DegreeOption: Identifiable, Codable, Hashable {
     let id: String
     let title: String
 }
- 
+
 struct SubjectOption: Identifiable, Codable, Hashable {
     let id: String
     let code: String
     let name: String
     var label: String { "\(code) \(name)" }
 }
- 
+
 struct BuildingFloor: Identifiable, Hashable {
     let id: String
     let name: String
     let floorPlanAssetName: String
 }
- 
+
 struct BuildingOption: Identifiable, Hashable {
     let id: String
     let code: String
@@ -35,9 +35,9 @@ struct BuildingOption: Identifiable, Hashable {
     let long: Double
     var label: String { "\(code) \(name)" }
 }
- 
+
 struct MetadataStore {
- 
+
     // MARK: - Degrees
     static let degrees: [DegreeOption] = [
         .init(id: "bit",      title: "Bachelor of Information Technology"),
@@ -58,11 +58,11 @@ struct MetadataStore {
         .init(id: "bengbus",  title: "Bachelor of Engineering / Bachelor of Business"),
         .init(id: "bscicit",  title: "Bachelor of Science / Bachelor of Creative Intelligence and Innovation"),
     ]
- 
+
     // MARK: - Subjects
     static let subjects: [SubjectOption] = [
         .init(id: "any",    code: "Any",    name: "Subject"),
- 
+
         // IT
         .init(id: "31005",  code: "31005",  name: "Machine Learning"),
         .init(id: "31061",  code: "31061",  name: "Database Principles"),
@@ -110,7 +110,7 @@ struct MetadataStore {
         .init(id: "42893",  code: "42893",  name: "Data Engineering Foundations"),
         .init(id: "43007",  code: "43007",  name: "Advanced Artificial Intelligence"),
         .init(id: "430031", code: "430031", name: "Python Programming for Data Processing"),
- 
+
         // Engineering
         .init(id: "48023",  code: "48023",  name: "Programming Fundamentals"),
         .init(id: "48024",  code: "48024",  name: "Programming 2"),
@@ -131,14 +131,14 @@ struct MetadataStore {
         .init(id: "41082",  code: "41082",  name: "Introduction to Data Engineering"),
         .init(id: "41099",  code: "41099",  name: "Introduction to Mechatronics Engineering"),
         .init(id: "41160",  code: "41160",  name: "Introduction to Biomedical Engineering"),
- 
+
         // Science & Maths
         .init(id: "33130",  code: "33130",  name: "Mathematics 1"),
         .init(id: "33230",  code: "33230",  name: "Mathematics 2"),
         .init(id: "33116",  code: "33116",  name: "Design, Data, and Decisions"),
         .init(id: "35006",  code: "35006",  name: "Numerical Methods"),
         .init(id: "35255",  code: "35255",  name: "Forensic Statistics"),
- 
+
         // Business
         .init(id: "20101",  code: "20101",  name: "Management Skills"),
         .init(id: "20104",  code: "20104",  name: "Introduction to Human Resource Management"),
@@ -153,13 +153,13 @@ struct MetadataStore {
         .init(id: "23568",  code: "23568",  name: "Intermediate Macroeconomics"),
         .init(id: "24108",  code: "24108",  name: "Marketing Principles"),
         .init(id: "24210",  code: "24210",  name: "Integrated Marketing Communications"),
- 
+
         // Law
         .init(id: "70616",  code: "70616",  name: "Foundations of Law"),
         .init(id: "70106",  code: "70106",  name: "Legal Research and Writing"),
         .init(id: "77715",  code: "77715",  name: "Banking Law"),
     ]
- 
+
     // MARK: - Vibes
     static let vibes: [String] = [
         "Silent Focus",
@@ -170,7 +170,7 @@ struct MetadataStore {
         "Peer Teaching",
         "Discussion Heavy",
     ]
-    
+
     static func vibeColor(_ vibe: String) -> Color {
         switch vibe {
         case "Silent Focus": return Color(red: 90/255, green: 145/255, blue: 175/255)
@@ -185,9 +185,9 @@ struct MetadataStore {
         default: return Color(red: 140/255, green: 150/255, blue: 165/255)
         }
     }
- 
-    // MARK: - Floor plan asset names (from Assets.xcassets)
-    private static let floorPlanAssets: [String: String] = [
+
+    // MARK: - Floor plan asset names
+    static let floorPlanAssets: [String: String] = [
         "Level 1":  "Building 2 level 5",
         "Level 2":  "Building 2 level 6",
         "Level 3":  "Building 2 level 7",
@@ -199,10 +199,10 @@ struct MetadataStore {
         "Level 9":  "Building 2 level 6",
         "Level 10": "Building 2 level 10",
     ]
- 
+
     // MARK: - Buildings
     static let buildings: [BuildingOption] = [
-        .init(id: "cb01", code: "CB01", name: "Buiding 1 (UTS Tower)",
+        .init(id: "cb01", code: "CB01", name: "Building 1 (UTS Tower)",
               floors: floors(cb: "CB01", levels: ["Level 2","Level 3","Level 4","Level 5","Level 6","Level 7"]),
               lat: -33.8836, long: 151.2009),
         .init(id: "cb02", code: "CB02", name: "Building 2 (Library)",
@@ -236,8 +236,7 @@ struct MetadataStore {
               floors: floors(cb: "CB11", levels: ["Level 4","Level 5","Level 6","Level 7","Level 8"]),
               lat: -33.8840, long: 151.1992),
     ]
- 
-    // MARK: - Helper
+
     private static func floors(cb: String, levels: [String]) -> [BuildingFloor] {
         levels.map { level in
             .init(
