@@ -1,11 +1,11 @@
-# 📚 StudyBuddy
+# StudyBuddy
 
-> **StudyBuddy** is an iOS app for UTS students to discover, share, and join study sessions on campus in real time.
+**StudyBuddy** is an iOS app for UTS students to discover, share, and join study sessions on campus in real time.
 Students can post where they are studying, what they are studying, and exactly where to find them using floor-plan pinning and location photos.
 
 ---
 
-## ✨ What StudyBuddy Does
+## What StudyBuddy Does
 
 - Create study posts with:
   - subject(s)
@@ -21,7 +21,7 @@ Students can post where they are studying, what they are studying, and exactly w
 ---
 
 ### Getting Started
-Download the files or clone the repo, drag the given GoogleService-Info.plist file to the root folder before building. Make sure to run on a device for accurate building detection.
+Download the files or clone the repo, drag the given **GoogleService-Info.plist file** (attached to the canvas submission) to the root folder before building. Make sure to run on a device for accurate building detection.
 
 ### Demo Video
 https://youtu.be/aBZPM54VQe4?si=RrZNhj1wuree4xCC
@@ -33,7 +33,7 @@ https://www.figma.com/design/FPP1hrn9tWTugRvbyZmh7G/StudyBuddy?node-id=0-1&t=4Mr
 
 ## 🧱 Architecture Overview
 
-The project follows a lightweight layered structure with clear separation between UI, app state orchestration, models, and services:
+The project follows a layered structure with clear separation between UI, app state orchestration, models, and services:
 
 - **Views (`StudyBuddy/Views`)**
   - SwiftUI screens and reusable components.
