@@ -1,15 +1,17 @@
 import CoreLocation
-import FirebaseFirestore
-import FirebaseAuth
-import FirebaseStorage
 import FirebaseCore
 import Combine
+import UIKit
 
+@MainActor
 final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locManager = CLLocationManager()
-    private let imageStorage = Storage.storage()
-    private let database = Firestore.firestore()
-    
+
+    private let authService: AuthServiceProtocol
+    private let userRepository: UserRepositoryProtocol
+    private let postRepository: PostRepositoryProtocol
+    private let imageStorageService: ImageStorageServiceProtocol
+
     @Published var isAuthenticated: Bool = false
     @Published var currentUser: UserProfile?
     @Published var posts: [StudyPost] = []
@@ -17,14 +19,64 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var status: String = "Loading"
     @Published var currentLoc: CLLocation?
     @Published var isLoading = false
-        
+
+    enum UIState {
+        case idle
+        case loading
+        case success(String)
+        case failure(String)
+    }
+
+    @Published private(set) var uiState: UIState = .idle
+
+    // Keep designated init explicit to avoid default-argument actor warnings.
+    init(
+        authService: AuthServiceProtocol,
+        userRepository: UserRepositoryProtocol,
+        postRepository: PostRepositoryProtocol,
+        imageStorageService: ImageStorageServiceProtocol
+    ) {
+        self.authService = authService
+        self.userRepository = userRepository
+        self.postRepository = postRepository
+        self.imageStorageService = imageStorageService
+        super.init()
+    }
+
+    // Keep no-arg init for existing call sites (AppState()).
+    convenience override init() {
+        self.init(
+            authService: AuthService(),
+            userRepository: UserRepository(),
+            postRepository: PostRepository(),
+            imageStorageService: ImageStorageService()
+        )
+    }
+
+    private func setLoading(_ message: String = "Loading") {
+        uiState = .loading
+        status = message
+        isLoading = true
+    }
+
+    private func setSuccess(_ message: String) {
+        uiState = .success(message)
+        status = message
+        isLoading = false
+    }
+
+    private func setFailure(_ message: String) {
+        uiState = .failure(message)
+        status = message
+        isLoading = false
+    }
+
     func signUp(email: String, password: String, profile: UserProfile) async {
-        await MainActor.run { isLoading = true }
+        setLoading("Signing up...")
 
         do {
-            let result = try await Auth.auth().createUser(withEmail: email, password: password)
-            let uid = result.user.uid
-            
+            let uid = try await authService.createUser(email: email, password: password)
+
             let userWithID = UserProfile(
                 id: uid,
                 email: email,
@@ -33,140 +85,88 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
                 username: profile.username,
                 degrees: profile.degrees,
                 year: profile.year,
-                major: profile.major
+                major: profile.major,
+                profilePic: profile.profilePic
             )
-            
+
             saveUser(userWithID)
-            
-            await MainActor.run {
-                currentUser = userWithID
-                isAuthenticated = true
-            }
-            
+
+            currentUser = userWithID
+            isAuthenticated = true
+
             await loadPosts()
+            setSuccess("Signed up")
         } catch {
-            await MainActor.run {
-                status = "Sign up failed: \(error.localizedDescription)"
-            }
+            setFailure("Sign up failed: \(error.localizedDescription)")
         }
-        
-        await MainActor.run { isLoading = false }
     }
-    
+
     func login(email: String, password: String) async {
-        await MainActor.run { isLoading = true }
+        setLoading("Logging in...")
 
         do {
-            let result = try await Auth.auth().signIn(withEmail: email, password: password)
-            let uid = result.user.uid
-            
-            if let user = await getUser(id: uid) {
-                await MainActor.run {
-                    currentUser = user
-                    isAuthenticated = true
-                }
-                await loadPosts()
+            let uid = try await authService.signIn(email: email, password: password)
+            guard let user = await userRepository.getUser(id: uid) else {
+                setFailure("Login failed: user profile not found")
+                return
             }
+
+            currentUser = user
+            isAuthenticated = true
+
+            await loadPosts()
+            setSuccess("Logged in")
         } catch {
-            await MainActor.run {
-                status = "Login failed: \(error.localizedDescription)"
-            }
-        }
-        
-        await MainActor.run { isLoading = false }
-    }
-    
-    func logout() {
-        try? Auth.auth().signOut()
-        currentUser = nil
-        isAuthenticated = false
-        selectedTab = 0
-        posts = []
-    }
-    
-    func checkSession() async {
-        if let firebaseUser = Auth.auth().currentUser {
-            if let user = await getUser(id: firebaseUser.uid) {
-                await MainActor.run {
-                    currentUser = user
-                    isAuthenticated = true
-                }
-                await loadPosts()
-            }
-        }
-    }
-    
-    func uploadImage(_ image: UIImage, identifier: String, folder:String) async -> String? {
-        guard let imageData = image.jpegData(compressionQuality: 0.7) else { return nil }
-        
-        let ref = Storage.storage().reference().child("\(folder)/\(identifier).jpg")
-        
-        do{
-            let _ = try await ref.putDataAsync(imageData)
-            let url = try await ref.downloadURL()
-            return url.absoluteString
-        } catch {
-            return nil
-        }
-    }
-    
-    func saveUser(_ user: UserProfile) {
-        database.collection("users").document(user.id).setData(user.convertFirestore()) { [weak self] error in
-            guard let self else { return }
-            Task { @MainActor in
-                if let error {
-                    self.status = "Failed to save user: \(error.localizedDescription)"
-                } else {
-                    self.status = "Saved user"
-                    self.updatePostsForUser(user)
-                }
-            }
+            setFailure("Login failed: \(error.localizedDescription)")
         }
     }
 
-    private func updatePostsForUser(_ user: UserProfile) {
-        for i in posts.indices where posts[i].hostUserID == user.id {
-            posts[i].hostUsername = user.username
-            posts[i].hostYear = user.year
-            posts[i].hostDegrees = user.degrees
-            posts[i].hostMajor = user.major
-            savePost(posts[i])
+    func logout() {
+        do {
+            try authService.signOut()
+            currentUser = nil
+            isAuthenticated = false
+            selectedTab = 0
+            posts = []
+            setSuccess("Logged out")
+        } catch {
+            setFailure("Logout failed: \(error.localizedDescription)")
         }
     }
-    
-    func getUser(id: String) async -> UserProfile? {
-        let doc = try? await database.collection("users").document(id).getDocument()
-        guard let data = doc?.data() else { return nil }
-        return UserProfile.convertModel(id: id, data: data)
+
+    func checkSession() async {
+        guard let uid = authService.currentUserID() else { return }
+        guard let user = await userRepository.getUser(id: uid) else { return }
+
+        currentUser = user
+        isAuthenticated = true
+        await loadPosts()
     }
-        
+
+    // Keep public API used by views.
+    func uploadImage(_ image: UIImage, identifier: String, folder: String) async -> String? {
+        await imageStorageService.uploadImage(image, identifier: identifier, folder: folder)
+    }
+
+    // Network I/O is delegated to services; this object owns UI state.
     func loadPosts() async {
         do {
-            let snapshot = try await database.collection("posts").getDocuments()
-            let parsed = snapshot.documents.compactMap { doc in
-                let post = StudyPost.convertModel(id: doc.documentID, data: doc.data())
-                return post
-            }
-            await MainActor.run {
-                posts = parsed
-            }
+            posts = try await postRepository.loadPosts()
         } catch {
-            await MainActor.run {
-                status = "Failed to load posts: \(error.localizedDescription)"
-            }
+            setFailure("Failed to load posts: \(error.localizedDescription)")
         }
     }
-    
+
     func addPost(from draft: CreatePostDraft) async {
-        guard let user = await MainActor.run(body: { currentUser }) else { return }
+        guard let user = currentUser else { return }
 
         let postId = UUID().uuidString
-        
-        var imageURL: String? = nil
+
+        var imageURL: String?
         if let image = draft.postImage {
             imageURL = await uploadImage(image, identifier: postId, folder: "posts")
         }
-        
+
         let post = StudyPost(
             id: postId,
             hostUserID: user.id,
@@ -192,64 +192,80 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
             createdAt: Date(),
             statusOverride: nil
         )
-        
-        await MainActor.run {
-            posts.insert(post, at: 0)
-        }
+
+        posts.insert(post, at: 0)
         savePost(post)
     }
-    
-    func savePost(_ post: StudyPost) {
-        database.collection("posts").document(post.id).setData(post.convertFirestore()) { [weak self] error in
-            guard let self else { return }
+
+    func saveUser(_ user: UserProfile) {
+        userRepository.saveUser(user) { [weak self] errorMessage in
             Task { @MainActor in
-                if let error {
-                    self.status = "Failed to save post: \(error.localizedDescription)"
-                } else {
-                    self.status = "Saved post"
-                }
+                self?.setFailure("Failed to save user: \(errorMessage)")
+            }
+        }
+
+        updatePostsForUser(user)
+        setSuccess("Saved user")
+    }
+
+    private func updatePostsForUser(_ user: UserProfile) {
+        for i in posts.indices where posts[i].hostUserID == user.id {
+            posts[i].hostUsername = user.username
+            posts[i].hostYear = user.year
+            posts[i].hostDegrees = user.degrees
+            posts[i].hostMajor = user.major
+            savePost(posts[i])
+        }
+    }
+
+    func getUser(id: String) async -> UserProfile? {
+        await userRepository.getUser(id: id)
+    }
+
+    func savePost(_ post: StudyPost) {
+        postRepository.savePost(post) { [weak self] errorMessage in
+            Task { @MainActor in
+                self?.setFailure("Failed to save post: \(errorMessage)")
             }
         }
     }
-    
+
     func updatePost(_ post: StudyPost) {
         guard let idx = posts.firstIndex(where: { $0.id == post.id }) else { return }
         posts[idx] = post
         savePost(post)
     }
-    
+
     func deletePost(_ post: StudyPost) {
         posts.removeAll { $0.id == post.id }
-        database.collection("posts").document(post.id).delete() { [weak self] error in
-            guard let self else { return }
-            if let error {
-                Task { @MainActor in
-                    self.status = "Failed to delete post: \(error.localizedDescription)"
-                }
+
+        postRepository.deletePost(post.id) { [weak self] errorMessage in
+            Task { @MainActor in
+                self?.setFailure("Failed to delete post: \(errorMessage)")
             }
         }
     }
-        
+
     func start() {
         locManager.delegate = self
         locManager.desiredAccuracy = kCLLocationAccuracyBest
         locManager.requestWhenInUseAuthorization()
         locManager.startUpdatingLocation()
     }
-    
+
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         currentLoc = location
     }
-    
+
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        status = "Location failed: \(error.localizedDescription)"
+        setFailure("Location failed: \(error.localizedDescription)")
     }
-    
+
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .denied, .restricted:
-            status = "Location permission denied"
+            setFailure("Location permission denied")
         case .notDetermined:
             locManager.requestWhenInUseAuthorization()
         default:

@@ -9,6 +9,7 @@ import SwiftUI
 import FirebaseCore
 
 @main
+@MainActor
 struct StudyBuddyApp: App {
     @StateObject private var appState = AppState()
 
