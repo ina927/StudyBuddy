@@ -97,6 +97,18 @@ struct StudyPost: Identifiable, Codable, Equatable {
     }
 
     static func convertModel(id: String, data: [String: Any]) -> StudyPost? {
+        convertModel(
+            id: id,
+            data: data,
+            fallbackFloorPlanAssetNameProvider: { _, _ in "Building 2 level 6" }
+        )
+    }
+
+    static func convertModel(
+        id: String,
+        data: [String: Any],
+        fallbackFloorPlanAssetNameProvider: (_ buildingCode: String, _ floor: String) -> String
+    ) -> StudyPost? {
         guard let hostUserID = data["hostUserID"] as? String,
               let hostUsername = data["hostUsername"] as? String,
               let hostYear = data["hostYear"] as? String,
@@ -115,14 +127,7 @@ struct StudyPost: Identifiable, Codable, Equatable {
               let createdAt = (data["createdAt"] as? Timestamp)?.dateValue()
         else { return nil }
 
-        // Fallback prevents crash if floor metadata changes after a post was created.
-        let fallbackFloorPlanAssetName: String = {
-            guard
-                let building = MetadataStore.buildings.first(where: { $0.code == buildingCode }),
-                let floorData = building.floors.first(where: { $0.name == floor })
-            else { return "Building 2 level 6" }
-            return floorData.floorPlanAssetName
-        }()
+        let fallbackFloorPlanAssetName = fallbackFloorPlanAssetNameProvider(buildingCode, floor)
 
         let parsedFloorPlanAssetName = ((data["floorPlanAssetName"] as? String)?.isEmpty == false)
             ? (data["floorPlanAssetName"] as? String ?? fallbackFloorPlanAssetName)

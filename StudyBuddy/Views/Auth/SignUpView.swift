@@ -75,7 +75,7 @@ struct SignUpView: View {
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                 Picker("Year", selection: $year) {
-                                    ForEach(["Year 1", "Year 2", "Year 3", "Year 4+"], id: \.self) { 
+                                    ForEach(["Year 1", "Year 2", "Year 3", "Year 4+"], id: \.self) {
                                         Text($0)
                                             .font(AppTheme.Typography.bodyMedium)
                                     }
@@ -112,7 +112,11 @@ struct SignUpView: View {
                             )
                             Task {
                                 await appState.signUp(email: email, password: password, profile: profile)
-                                await MainActor.run { dismiss() }
+                                await MainActor.run {
+                                    if appState.isAuthenticated {
+                                        dismiss()
+                                    }
+                                }
                             }
                         } label: {
                             Text("Create account")

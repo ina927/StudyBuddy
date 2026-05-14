@@ -4,13 +4,12 @@ import Combine
 import UIKit
 
 @MainActor
-final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let locManager = CLLocationManager()
-
+final class AppState: NSObject, ObservableObject {
     private let authService: AuthServiceProtocol
     private let userRepository: UserRepositoryProtocol
     private let postRepository: PostRepositoryProtocol
     private let imageStorageService: ImageStorageServiceProtocol
+    private let locationService: LocationServiceProtocol
 
     @Published var isAuthenticated: Bool = false
     @Published var currentUser: UserProfile?
@@ -27,13 +26,33 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
         authService: AuthServiceProtocol,
         userRepository: UserRepositoryProtocol,
         postRepository: PostRepositoryProtocol,
-        imageStorageService: ImageStorageServiceProtocol
+        imageStorageService: ImageStorageServiceProtocol,
+        locationService: LocationServiceProtocol
     ) {
         self.authService = authService
         self.userRepository = userRepository
         self.postRepository = postRepository
         self.imageStorageService = imageStorageService
+        self.locationService = locationService
         super.init()
+
+        self.locationService.onLocationUpdate = { [weak self] location in
+            Task { @MainActor in
+                self?.currentLoc = location
+            }
+        }
+
+        self.locationService.onLocationError = { [weak self] error in
+            Task { @MainActor in
+                self?.setFailure(.location("Location failed: \(error.localizedDescription)"))
+            }
+        }
+
+        self.locationService.onAuthorizationDenied = { [weak self] in
+            Task { @MainActor in
+                self?.setFailure(.location("Location permission denied"))
+            }
+        }
     }
 
     // Keep no-arg init for existing call sites (AppState()).
@@ -42,7 +61,8 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
             authService: AuthService(),
             userRepository: UserRepository(),
             postRepository: PostRepository(),
-            imageStorageService: ImageStorageService()
+            imageStorageService: ImageStorageService(),
+            locationService: LocationService()
         )
     }
 
@@ -69,6 +89,11 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     func signUp(email: String, password: String, profile: UserProfile) async {
+        guard !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !password.isEmpty else {
+            setFailure(.auth("Please enter your email and password."))
+            return
+        }
         setLoading("Signing up...")
 
         do {
@@ -99,6 +124,11 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     func login(email: String, password: String) async {
+        guard !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !password.isEmpty else {
+            setFailure(.auth("Please enter your email and password."))
+            return
+        }
         setLoading("Logging in...")
 
         do {
@@ -256,29 +286,6 @@ final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     func start() {
-        locManager.delegate = self
-        locManager.desiredAccuracy = kCLLocationAccuracyBest
-        locManager.requestWhenInUseAuthorization()
-        locManager.startUpdatingLocation()
-    }
-
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
-        currentLoc = location
-    }
-
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        setFailure(.location("Location failed: \(error.localizedDescription)"))
-    }
-
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        switch manager.authorizationStatus {
-        case .denied, .restricted:
-            setFailure(.location("Location permission denied"))
-        case .notDetermined:
-            locManager.requestWhenInUseAuthorization()
-        default:
-            break
-        }
+        locationService.start()
     }
 }
