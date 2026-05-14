@@ -8,6 +8,11 @@
 import Foundation
 import PhotosUI
 
+private extension String {
+    // Treat persisted empty strings as nil to keep optional semantics stable.
+    var nilIfBlank: String? { isEmpty ? nil : self }
+}
+
 struct UserProfile: Identifiable, Codable {
     let id: String
     var email: String
@@ -18,20 +23,28 @@ struct UserProfile: Identifiable, Codable {
     var year: String
     var major: String?
     var avatarData: Data? = nil
-
     var profilePic: String?
-    
+
     func convertFirestore() -> [String: Any] {
-        return [
+        // Persist only semantic values to avoid empty-string drift in round-trips.
+        var payload: [String: Any] = [
             "email": email,
             "firstName": firstName,
             "lastName": lastName,
             "username": username,
             "degrees": degrees,
-            "year": year,
-            "major": major ?? "",
-            "profilePic": profilePic ?? ""
+            "year": year
         ]
+
+        if let major, !major.isEmpty {
+            payload["major"] = major
+        }
+
+        if let profilePic, !profilePic.isEmpty {
+            payload["profilePic"] = profilePic
+        }
+
+        return payload
     }
 
     static func convertModel(id: String, data: [String: Any]) -> UserProfile? {
@@ -40,11 +53,8 @@ struct UserProfile: Identifiable, Codable {
               let lastName = data["lastName"] as? String,
               let username = data["username"] as? String,
               let degrees = data["degrees"] as? [String],
-              let profilePic = data["profilePic"] as? String,
               let year = data["year"] as? String
         else { return nil }
-              
-        
 
         return UserProfile(
             id: id,
@@ -54,8 +64,8 @@ struct UserProfile: Identifiable, Codable {
             username: username,
             degrees: degrees,
             year: year,
-            major: data["major"] as? String,
-            profilePic: profilePic
+            major: (data["major"] as? String)?.nilIfBlank,
+            profilePic: (data["profilePic"] as? String)?.nilIfBlank
         )
     }
 }

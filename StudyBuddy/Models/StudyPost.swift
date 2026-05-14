@@ -8,6 +8,10 @@
 import Foundation
 import FirebaseCore
 
+private extension String {
+    // Treat persisted empty strings as nil to keep optional semantics stable.
+    var nilIfBlank: String? { isEmpty ? nil : self }
+}
 
 struct StudyPost: Identifiable, Codable, Equatable {
     enum Status: String, Codable, CaseIterable {
@@ -46,22 +50,20 @@ struct StudyPost: Identifiable, Codable, Equatable {
     var statusOverride: Status?
 
     var computedStatus: Status {
-        if let override = statusOverride {
-            return override
-        }
+        if let override = statusOverride { return override }
         let now = Date()
         if now < startTime { return .notStarted }
         if now > endTime { return .finished }
         return .ongoing
     }
-    
+
     func convertFirestore() -> [String: Any] {
-        return [
+        // Persist only semantic values to avoid empty-string drift in round-trips.
+        var payload: [String: Any] = [
             "hostUserID": hostUserID,
             "hostUsername": hostUsername,
             "hostYear": hostYear,
             "hostDegrees": hostDegrees,
-            "hostMajor": hostMajor ?? "",
             "title": title,
             "bodyText": bodyText,
             "buildingCode": buildingCode,
@@ -71,15 +73,27 @@ struct StudyPost: Identifiable, Codable, Equatable {
             "pinX": pinX,
             "pinY": pinY,
             "locationDescription": locationDescription,
-            "photoAssetName": photoAssetName ?? "",
             "subjects": subjects,
             "vibe": vibe,
             "capacity": capacity,
             "startTime": Timestamp(date: startTime),
             "endTime": Timestamp(date: endTime),
-            "createdAt": Timestamp(date: createdAt),
-            "statusOverride": statusOverride?.rawValue ?? ""
+            "createdAt": Timestamp(date: createdAt)
         ]
+
+        if let hostMajor, !hostMajor.isEmpty {
+            payload["hostMajor"] = hostMajor
+        }
+
+        if let photoAssetName, !photoAssetName.isEmpty {
+            payload["photoAssetName"] = photoAssetName
+        }
+
+        if let statusOverride {
+            payload["statusOverride"] = statusOverride.rawValue
+        }
+
+        return payload
     }
 
     static func convertModel(id: String, data: [String: Any]) -> StudyPost? {
@@ -101,6 +115,7 @@ struct StudyPost: Identifiable, Codable, Equatable {
               let createdAt = (data["createdAt"] as? Timestamp)?.dateValue()
         else { return nil }
 
+        // Fallback prevents crash if floor metadata changes after a post was created.
         let fallbackFloorPlanAssetName: String = {
             guard
                 let building = MetadataStore.buildings.first(where: { $0.code == buildingCode }),
@@ -122,7 +137,7 @@ struct StudyPost: Identifiable, Codable, Equatable {
             hostUsername: hostUsername,
             hostYear: hostYear,
             hostDegrees: hostDegrees,
-            hostMajor: data["hostMajor"] as? String,
+            hostMajor: (data["hostMajor"] as? String)?.nilIfBlank,
             title: title,
             bodyText: bodyText,
             buildingCode: buildingCode,
@@ -132,14 +147,14 @@ struct StudyPost: Identifiable, Codable, Equatable {
             pinX: parsedPinX,
             pinY: parsedPinY,
             locationDescription: locationDescription,
-            photoAssetName: data["photoAssetName"] as? String,
+            photoAssetName: (data["photoAssetName"] as? String)?.nilIfBlank,
             subjects: subjects,
             vibe: vibe,
             capacity: capacity,
             startTime: startTime,
             endTime: endTime,
             createdAt: createdAt,
-            statusOverride: Status(rawValue: data["statusOverride"] as? String ?? "")
+            statusOverride: (data["statusOverride"] as? String).flatMap(Status.init(rawValue:))
         )
     }
 }
